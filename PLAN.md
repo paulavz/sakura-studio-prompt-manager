@@ -22,21 +22,44 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 ---
 
-## Fase 1 — Backend vivo (PocketBase + esquemas)
+## Fase 0.5 — Limpieza del intento PocketBase
 
-**Objetivo:** base de datos hosteada y accesible desde la app, con todas las collections del modelo final ya creadas.
+**Contexto:** durante la primera tentativa de Fase 1 se introdujo código apuntando a PocketBase + PocketHost. Al confirmar que PocketHost no ofrece tier gratuito sin tarjeta, se decide migrar a Supabase. Antes de tocar nada nuevo hay que dejar el repo limpio.
+
+**Objetivo:** eliminar todo rastro de PocketBase para que la nueva Fase 1 empiece desde un estado coherente con `CLAUDE.md`.
 
 **Responsabilidades:**
-- Crear cuenta en PocketHost.io y desplegar instancia.
-- Crear collections según `CLAUDE.md`: `items`, `versions`, `tags`, y configurar `users` (built-in).
-- Definir reglas de acceso filtrando por `owner = @request.auth.id` desde el inicio (aunque auth esté deshabilitado en v1).
-- Validación `snake_case` a nivel de regla en `tags.slug`.
-- Cliente PocketBase singleton en `lib/pocketbase.ts`, reutilizable en server y client components.
-- Variables de entorno en `.env.local` y `.env.example`: `NEXT_PUBLIC_PB_URL`, `PB_ADMIN_EMAIL`, `PB_ADMIN_PASSWORD`, `MIN_VAR_LENGTH`, `MAX_VAR_LENGTH`, `NEXT_PUBLIC_AUTH_ENABLED`.
-- Crear el super-user inicial manualmente desde el admin de PocketBase.
-- Verificación: una página de smoke test que liste cuántos items hay en la DB (se borra al final de la fase).
+- Borrar `lib/pocketbase.ts`.
+- Borrar `app/smoke-test/page.tsx` (la verificación se reescribirá en la nueva Fase 1).
+- Desinstalar la dependencia `pocketbase` del `package.json` (`npm uninstall pocketbase`) y verificar que no queda en `node_modules` ni en el lockfile.
+- Limpiar `.env.local` y `.env.example`: eliminar `NEXT_PUBLIC_PB_URL`, `PB_ADMIN_EMAIL`, `PB_ADMIN_PASSWORD`. Conservar `MIN_VAR_LENGTH`, `MAX_VAR_LENGTH`, `NEXT_PUBLIC_AUTH_ENABLED`.
+- Buscar referencias residuales (`pocketbase`, `PB_`, `pockethost`) en el código y eliminarlas.
+- Verificación final: `npx tsc --noEmit` sin errores y `npm run dev` arranca con la página por defecto del scaffold (Fase 0).
 
 **Dependencias:** Fase 0.
+
+**Hecho cuando:** el repo no contiene ni una sola línea referente a PocketBase y el dev server sigue funcionando como al final de la Fase 0.
+
+---
+
+## Fase 1 — Backend vivo (Supabase + esquemas)
+
+**Objetivo:** Postgres gestionado por Supabase accesible desde la app, con todas las tablas del modelo final ya creadas y RLS activa.
+
+**Responsabilidades:**
+- Reutilizar el proyecto Supabase existente de la usuaria o crear uno nuevo dedicado a Sakura. Anotar la `Project URL`, `anon key` y `service role key`.
+- Crear las tablas según `CLAUDE.md`: `items`, `versions`, `tags`. Tipos exactos (uuid PK, jsonb tags, check constraints).
+- Habilitar RLS en las tres tablas. Políticas iniciales filtrando por `owner = auth.uid()` (en `versions`, vía subquery sobre el `owner` del `item_id` referenciado).
+- `check constraint` `slug ~ '^[a-z][a-z0-9_]*$'` en `tags.slug` (validación snake_case en backend).
+- Función Postgres `rotate_versions(item_id uuid)` que borra las 25 versiones más antiguas cuando hay más de 50, expuesta como RPC para llamarla desde el server action de guardado.
+- Versionar todo lo anterior como migraciones SQL en `supabase/migrations/` (Supabase CLI).
+- Instalar `@supabase/supabase-js` y `@supabase/ssr`.
+- Crear `lib/supabase/server.ts` y `lib/supabase/client.ts` siguiendo el patrón oficial de `@supabase/ssr` para Next App Router.
+- Variables de entorno en `.env.local` y `.env.example`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (server-only), más las heredadas (`MIN_VAR_LENGTH`, `MAX_VAR_LENGTH`, `NEXT_PUBLIC_AUTH_ENABLED`).
+- Crear la cuenta de uso personal v1 desde el dashboard de Supabase (Auth → Users → Add user). Anotar su `id` para sembrar items con el `owner` correcto.
+- Verificación: una página de smoke test (`app/smoke-test/page.tsx`) que ejecute `select count(*) from items` con la sesión de v1 y muestre el resultado. Se borra al final de la fase.
+
+**Dependencias:** Fase 0.5.
 
 ---
 
@@ -45,7 +68,7 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 **Objetivo:** entrar a la app y ver visualmente todos los items existentes, navegables por categoría. Sin editar todavía.
 
 **Responsabilidades:**
-- Insertar manualmente 5–10 items semilla desde el admin de PocketBase para tener con qué probar.
+- Insertar manualmente 5–10 items semilla desde el dashboard de Supabase (Table Editor) o vía SQL, asignando `owner` = id del usuario v1.
 - Página `/` con sidebar de categorías + grid de cards.
 - Cards minimalistas: solo título + chips de tags. Sin glow ni animaciones todavía (van en Fase 9).
 - Búsqueda fuzzy local por título (filtro client-side sobre los items ya cargados).
@@ -178,10 +201,11 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 **Objetivo:** dejar el flag de auth listo para activar cuando quieras compartir la herramienta.
 
 **Responsabilidades:**
-- Auditar que todas las queries a PocketBase respetan `owner = @request.auth.id`.
-- Confirmar que cada item creado en v1 tiene el `owner` del super-user asignado.
-- Implementar pantalla de login (oculta tras `NEXT_PUBLIC_AUTH_ENABLED=false` por defecto).
-- Smoke test: encender el flag temporalmente, verificar que el login funciona, apagarlo de nuevo.
+- Auditar que todas las queries a Supabase pasan por la sesión RLS y que las políticas filtran por `owner = auth.uid()` en las tres tablas.
+- Confirmar que cada item creado en v1 tiene el `owner` igual al `id` del usuario personal de v1.
+- Implementar pantalla de login con Supabase Auth (oculta tras `NEXT_PUBLIC_AUTH_ENABLED=false` por defecto). Se puede usar Supabase Auth UI o un formulario propio que llame a `signInWithPassword` / `signInWithOtp`.
+- Configurar `middleware.ts` para refrescar la sesión en cada request (patrón oficial `@supabase/ssr`).
+- Smoke test: encender el flag temporalmente, verificar que el login funciona y que un segundo usuario no ve los items del primero, apagarlo de nuevo.
 
 **Dependencias:** Fase 4.
 
@@ -193,9 +217,9 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 **Responsabilidades:**
 - Conectar el repo a Vercel.
-- Configurar variables de entorno en Vercel (mismas de `.env.example`).
-- Verificar conectividad Vercel → PocketHost en producción.
-- Verificar reglas de PocketBase en el entorno desplegado.
+- Configurar variables de entorno en Vercel (mismas de `.env.example`, recordando que `SUPABASE_SERVICE_ROLE_KEY` solo va en server, nunca como `NEXT_PUBLIC_*`).
+- Verificar conectividad Vercel → Supabase en producción (cookies de sesión, dominios autorizados en Supabase Auth).
+- Verificar que las políticas RLS siguen activas y que el smoke test desde producción solo ve los items propios.
 - Pulir metadata, favicon (un pétalo discreto), título.
 
 **Dependencias:** todas las anteriores.
@@ -205,12 +229,12 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 ## Resumen de dependencias
 
 ```
-0 → 1 → 2 → 3 → 4 → 5 (MVP)
-                4 → 6 → 7
-                4 → 8
-                4 → 10
-            2,5 → 9
-        todas → 11
+0 → 0.5 → 1 → 2 → 3 → 4 → 5 (MVP)
+                      4 → 6 → 7
+                      4 → 8
+                      4 → 10
+                  2,5 → 9
+              todas → 11
 ```
 
 Las fases 6, 7, 8, 9 y 10 pueden abordarse en cualquier orden tras la 5, según prioridad.

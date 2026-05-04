@@ -7,6 +7,12 @@
       "skillPath": "skills/pocketbase-best-practices/SKILL.md",
       "computedHash": "4833aba8fc34a48e682e36403390bbc5db8c5c3df16512bb5f3c75af3f70b6fe"
     },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
+      "computedHash": "8e41c7417894e6f394614ee7ca3ee5322b1e58d890255d441f42dea98732597f"
+    },
     "tailwind-design-system": {
       "source": "wshobson/agents",
       "sourceType": "github",

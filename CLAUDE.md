@@ -6,13 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Dashboard de gestión de prompts con estética Japandi. Permite organizar, parametrizar (variables `{{ }}`), asignar un agente e inyectar skills sobre prompts en un flujo minimalista.
 
-> Estado: especificación. El repositorio aún no tiene código — el primer hito es scaffold de Next.js 14 + Tailwind + PocketBase con la arquitectura de este documento.
+> Estado: especificación. El primer hito es scaffold de Next.js 14 + Tailwind + Supabase con la arquitectura de este documento.
+
+> **Nota de migración (mayo 2026):** la spec original apuntaba a PocketBase + PocketHost, pero PocketHost no ofrece tier gratuito sin tarjeta. Se sustituyó por **Supabase**, que sí tiene free tier estable y la usuaria ya domina. El modelo de datos se traduce 1:1 a tablas Postgres + RLS.
 
 ## Stack
 
 - **Framework:** Next.js 14+ (App Router)
 - **Estilos:** Tailwind CSS
-- **DB:** PocketBase (hosteado en **PocketHost.io** — free tier)
+- **DB / Backend:** **Supabase** (Postgres + Auth + Row Level Security + Storage si hace falta) — free tier
 - **Hosting frontend:** **Vercel** (free tier, integración nativa con Next App Router)
 - **Animaciones:** Framer Motion (drawer, lluvia de pétalos, hover glow)
 - **Editor markdown WYSIWYG:** **Tiptap** (modo rendered editable)
@@ -30,50 +32,62 @@ Reglas estéticas:
 - Bordes 1px sutiles, padding/gap generosos, cero decoración superflua.
 - Tokens (colores, espaciados, fuentes) centralizados en `tailwind.config.ts` — prohibido hardcodear `#FFB7C5` en componentes.
 
-## Modelo de datos (PocketBase)
+## Modelo de datos (Supabase / Postgres)
+
+Todas las tablas viven en el schema `public`. Las claves primarias son `uuid` con `default gen_random_uuid()`. Toda tabla incluye `created_at timestamptz default now()` y `updated_at timestamptz default now()` (mantenido vía trigger).
 
 ### `items`
-| campo | tipo |
-|---|---|
-| `title` | text |
-| `content` | text (markdown) |
-| `category` | select: `template` \| `plan` \| `data_output` \| `agente` \| `skill` |
-| `tags` | JSON array (de slugs `snake_case`, ver collection `tags`) |
-| `is_favorite` | bool |
-| `owner` | relation → `users` (preparado para multi-user, ver Auth) |
+| campo | tipo Postgres | notas |
+|---|---|---|
+| `id` | `uuid` PK | `default gen_random_uuid()` |
+| `title` | `text` | `not null` |
+| `content` | `text` | markdown, `not null default ''` |
+| `category` | `text` | `check (category in ('template','plan','data_output','agente','skill'))` |
+| `tags` | `jsonb` | array de slugs `snake_case`, `default '[]'::jsonb` |
+| `is_favorite` | `boolean` | `default false` |
+| `owner` | `uuid` | FK → `auth.users(id)` `on delete cascade`, `not null` |
 
 ### `versions`
 Snapshot creado **solo al guardar** un item (estricto, no en drafts).
 
-| campo | tipo |
-|---|---|
-| `item_id` | relation → `items` |
-| `content_snapshot` | text |
-| `created` | datetime |
+| campo | tipo Postgres | notas |
+|---|---|---|
+| `id` | `uuid` PK | `default gen_random_uuid()` |
+| `item_id` | `uuid` | FK → `items(id)` `on delete cascade`, `not null` |
+| `content_snapshot` | `text` | `not null` |
+| `created_at` | `timestamptz` | `default now()` |
 
-**Rotación:** al alcanzar 50 versiones por item, borrar las **25 más antiguas** en la misma transacción del nuevo guardado. No avisar al usuario.
+**Rotación:** al alcanzar 50 versiones por item, borrar las **25 más antiguas** en la misma transacción del nuevo guardado. Implementar como **función Postgres** (`create or replace function rotate_versions(item uuid)`) llamada desde el server action que guarda, o como un único RPC que haga `insert + delete` en una transacción. No avisar al usuario.
 
 ### `tags`
-Collection separada para gestión limpia desde Settings.
+Tabla separada para gestión limpia desde Settings.
 
-| campo | tipo |
-|---|---|
-| `slug` | text, único, `snake_case` obligatorio (regex enforced) |
-| `label` | text (display opcional) |
+| campo | tipo Postgres | notas |
+|---|---|---|
+| `id` | `uuid` PK | `default gen_random_uuid()` |
+| `slug` | `text` | `unique not null`, `check (slug ~ '^[a-z][a-z0-9_]*$')` |
+| `label` | `text` | display opcional |
+| `owner` | `uuid` | FK → `auth.users(id)` `on delete cascade` (tags son por usuario) |
 
 ## Auth
 
-- PocketBase trae `users` collection out-of-the-box.
-- **v1 (uso personal):** un único super-user hardcodeado vía env var; UI de login deshabilitada.
-- **v2 (multi-user):** flipear flag `NEXT_PUBLIC_AUTH_ENABLED` y exponer login. El campo `owner` en `items` ya está listo desde día 1, no requiere migración.
-- Rules de PocketBase deben filtrar por `owner = @request.auth.id` desde el inicio.
+- Supabase trae el schema `auth` con la tabla `auth.users` lista.
+- **v1 (uso personal):** una única cuenta personal creada manualmente desde el dashboard de Supabase. UI de login deshabilitada (la sesión se establece una vez en el navegador y se guarda; o se trabaja vía service role en server actions). El `owner` de cada item es **el `id` de esa cuenta**.
+- **v2 (multi-user):** flipear flag `NEXT_PUBLIC_AUTH_ENABLED` y exponer login (Supabase Auth UI o un formulario propio). El campo `owner` ya está listo desde día 1, no requiere migración.
+- **RLS obligatoria desde el inicio** en `items`, `versions` y `tags`. Política base:
+  ```sql
+  using ( owner = auth.uid() )
+  with check ( owner = auth.uid() )
+  ```
+  Para `versions`, la política se basa en el `owner` del `item_id` referenciado (join lateral o subquery).
 
 ## Variables de entorno
 
 | var | descripción |
 |---|---|
-| `NEXT_PUBLIC_PB_URL` | URL del PocketBase hosteado |
-| `PB_ADMIN_EMAIL` / `PB_ADMIN_PASSWORD` | credenciales super-user (v1) |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | clave pública (anon) — usada en cliente y server con RLS |
+| `SUPABASE_SERVICE_ROLE_KEY` | clave de servicio — **solo server**, nunca expuesta al cliente; usada para tareas administrativas o para v1 con sesión efímera |
 | `MIN_VAR_LENGTH` | longitud mínima global de inputs de variables `{{ }}` |
 | `MAX_VAR_LENGTH` | longitud máxima global (recordar: una variable puede ser un prompt completo, dimensionar generoso) |
 | `NEXT_PUBLIC_AUTH_ENABLED` | bool, activa el login multi-user |
@@ -163,7 +177,7 @@ Paralelo a Skills pero con semántica distinta: un agente define **quién ejecut
 - Al asignar tags a un item: combo box con dos modos en el mismo input
   1. Seleccionar tags existentes (autocomplete).
   2. **Add new** free-form → valida `snake_case` y crea entrada en `tags` antes de asignar.
-- `snake_case` es **obligatorio** y se valida en cliente y en PocketBase rule.
+- `snake_case` es **obligatorio** y se valida en cliente **y** en `check constraint` Postgres (`slug ~ '^[a-z][a-z0-9_]*$'`).
 
 ### 7. Sakura Experience (animaciones)
 
@@ -174,12 +188,16 @@ Paralelo a Skills pero con semántica distinta: un agente define **quién ejecut
 ## Convenciones de implementación
 
 - **App Router** con server components por defecto; client components solo donde haya interactividad (Drawer, animaciones, editor Tiptap, formularios).
-- Cliente PocketBase único en `lib/pocketbase.ts`, reusable en server y client.
+- Cliente Supabase con **dos factories** (paquete `@supabase/ssr`):
+  - `lib/supabase/server.ts` → cliente para Server Components, Route Handlers y Server Actions (usa cookies para la sesión).
+  - `lib/supabase/client.ts` → cliente para Client Components (singleton en el browser).
+  - `lib/supabase/admin.ts` (opcional, server-only) → cliente con `service role` para tareas que deben saltar RLS de forma controlada.
+- Migraciones SQL versionadas en `supabase/migrations/` (`supabase migration new ...`); evitar cambios manuales no rastreables en el dashboard.
 - Utilidades puras en `lib/`:
   - `variables.ts` — detección y reemplazo de `{{ }}`.
   - `skills.ts` — scan de skills aplicadas en un `content`.
   - `agent.ts` — detección, reemplazo y extracción del agente asignado.
-  - `versioning.ts` — lógica de snapshot + rotación FIFO.
+  - `versioning.ts` — lógica de snapshot + rotación FIFO (envuelve la RPC Postgres).
   - `tags.ts` — validación `snake_case`.
 - No introducir abstracciones especulativas; cada utilidad nace cuando dos componentes la necesitan.
 
@@ -190,4 +208,4 @@ Las siguientes decisiones se tomaron por defecto y deben confirmarse antes/duran
 1. Detección de skills aplicadas vía scan literal del string `Usa la skill [X] para este desarrollo.` (única vía dado que la inyección es append de texto plano).
 2. Detección de agente asignado vía scan literal de `Actúa como el agente [X] para este desarrollo.` al inicio del `content` (mismo principio que skills).
 3. Tiptap como editor WYSIWYG del modo rendered.
-4. Collection separada `tags` en PocketBase (vs. derivar de items).
+4. Tabla separada `tags` en Postgres (vs. derivar de `items.tags jsonb`).
