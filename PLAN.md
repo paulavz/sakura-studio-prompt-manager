@@ -1,8 +1,8 @@
 # 🌸 Sakura Prompt Studio — Plan de Implementación por Fases
 
-Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entrega valor verificable. Prioridad: **funcional rápido > completo**. Decisiones técnicas y de UX están definidas en `CLAUDE.md`; este documento solo orquesta el orden.
+Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entrega valor verificable. Prioridad: **funcional rápido > completo**. Decisiones técnicas y de UX están definidas en `CLAUDE.md`; este documento solo orquesta el orden. La **referencia de diseño** tiene **dos accesos** (URL Anthropic + HTML en `design/`) descritos en `CLAUDE.md` — úsalos en prompts con **`@CLAUDE.md`** y **`@design/...`** (OpenCode, Cursor, Claude Code, etc.).
 
-**Hito MVP usable:** al terminar la **Fase 5** ya tienes la herramienta sirviéndote para tu trabajo diario (gallery + edición + variables drawer). Las fases 6–11 son enriquecimiento.
+**Hito MVP usable:** al terminar la **Fase 5** ya tienes la herramienta sirviéndote para tu trabajo diario (gallery + edición + variables drawer). Las fases 6–12 son enriquecimiento.
 
 ---
 
@@ -12,11 +12,12 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 **Responsabilidades:**
 - Inicializar Next.js 14 con App Router y Tailwind.
+- **Referencia visual en repo:** mantener el mockup exportado como HTML standalone bajo `design/` (p. ej. `design/Sakura Prompt Studio _standalone_.html`), alineado con la sección *Referencia de diseño* de `CLAUDE.md` (**URL + archivo local** — accesible vía `@design/...` en Claude Code, OpenCode, Cursor, etc.).
 - Definir tokens de diseño en `tailwind.config.ts`: color `sakura` (`#FFB7C5`), familias `Inter` y `JetBrains Mono`, escala de espaciado generosa, borde 1px sutil como default.
 - Cargar fuentes vía `next/font`.
 - Layout raíz con fondo `#FFFFFF` y tipografía negra global.
-- Estructura base de carpetas: `app/`, `components/`, `lib/`.
-- README mínimo apuntando a `CLAUDE.md` como fuente de verdad.
+- Estructura base de carpetas: `app/`, `components/`, `lib/` (y `design/` para el mockup).
+- README mínimo apuntando a `CLAUDE.md` como fuente de verdad e indicando que el diseño vive también en `design/*.html`.
 
 **Dependencias:** ninguna.
 
@@ -68,8 +69,9 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 **Objetivo:** entrar a la app y ver visualmente todos los items existentes, navegables por categoría. Sin editar todavía.
 
 **Responsabilidades:**
-- Insertar manualmente 5–10 items semilla desde el dashboard de Supabase (Table Editor) o vía SQL, asignando `owner` = id del usuario v1.
+- Insertar manualmente 5–10 items semilla desde el dashboard de Supabase (Table Editor) o vía SQL, asignando `owner` = id del usuario v1 (alternativa reproducible: `supabase/seed.sql` si existe en el repo).
 - Página `/` con sidebar de categorías + grid de cards.
+- **Paridad de diseño:** alinear layout, densidad y jerarquía con la referencia en `CLAUDE.md` — **ambos accesos** (URL Anthropic + `@design/Sakura Prompt Studio _standalone_.html` o el HTML vigente en `design/`) para validación en Claude Code, OpenCode u otras herramientas.
 - Cards minimalistas: solo título + chips de tags. Sin glow ni animaciones todavía (van en Fase 9).
 - Búsqueda fuzzy local por título (filtro client-side sobre los items ya cargados).
 - Toggle "Solo favoritos".
@@ -182,21 +184,75 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 ---
 
-## Fase 9 — Sakura Experience (animaciones)
+## Fase 9 — Pixel Perfect
 
-**Objetivo:** la capa estética que diferencia el producto. Se hace al final porque depende de que todo el flujo funcional ya esté en sitio.
+**Objetivo:** alinear visualmente todos los componentes de la app con la referencia de diseño `@design/Sakura Prompt Studio _standalone_.html` (y su URL complementaria en `@CLAUDE.md`). Se preservan las restricciones de tokens de `@CLAUDE.md` (rosa Sakura solo en 3 usos permitidos; fondo `#FFFFFF`; bordes 1px; cero decoración superflua).
 
 **Responsabilidades:**
-- Lluvia de pétalos (Framer Motion) disparada al copiar exitosamente desde Drawer o vista principal. Duración ~1.5s, no intrusiva.
-- Hover glow rosa difuso en cards de la galería.
-- Pulir easing del Drawer y de transiciones entre Rendered ⇄ Raw.
-- Verificar que el rosa Sakura solo aparece en los 3 usos permitidos (hover cards, chips de variables, animaciones de feedback).
 
-**Dependencias:** Fases 2, 5.
+### 9.1 Sidebar
+- Agregar bloque de branding en la parte superior: icono 🌸 + identificador "Sakura" con fondo sutil (usar `--color-sakura` solo en el bloque decorativo del sidebar si la referencia lo indica, respetando la restricción de `@CLAUDE.md` de que el rosa no esté en UI neutra ni botones genéricos; el bloque branding califica como "uso decorativo acotado" — validar contra el HTML de diseño).
+- Ajustar padding vertical de los items de categoría para igualar la densidad del mockup.
+- Ancho del sidebar: fijo en desktop, colapsable o responsivo en mobile según el mockup.
+
+### 9.2 Cards de galería
+- Ajustar padding (`p-6` → el valor que refleje la densidad del mockup: `p-5` o `p-4`).
+- Reducir gap entre cards si el mockup es más denso (`gap-3` vs `gap-4` actual).
+- Borde de card: verificar coincidencia cromática con el mockup (`border-gray-200` es correcto si equivale al trazo `#E8E8E8`/`#E5E5E5` del SVG de diseño).
+- Hover de card: el plan lo reserva para Fase 10 (Sakura Experience → glow rosa); en esta fase solo debe igualar el estado base del mockup.
+- Título: verificar `font-size` y `font-weight` contra el mockup.
+
+### 9.3 Tags chips (items.tags jsonb)
+- Implementar color de fondo sutil para chips de tags, **respetando la restricción de `@CLAUDE.md`**:
+  - Tags genéricos: fondo gris claro (`#F5F5F5`) o el color neutro que muestre el diseño para chips no-variables.
+  - Chips de variable `{{ }}`: fondo rosa sakura permitido (`rgba(255,183,197,0.2)` con borde `rgba(255,183,197,0.5)`) — es uno de los 3 usos exclusivos del rosa.
+  - Chips con hint de categoría o tipo: colores pastel del mockup (azul `#E8F4FF`, verde `#F0F8E8`) si aplica, sin hardcodear valores — crear tokens en `globals.css` si es necesario.
+- Border-radius de chips: verificar contra el mockup (`rounded-full` en implementación vs `rx="2"` en SVG = ~4px → puede necesitar `rounded-md` en vez de `rounded-full`).
+- Font-size del chip: verificar `text-xs` vs mockup.
+
+### 9.4 Chips de variable (viewer / drawer)
+- En la vista de item (Fase 3+) y en el Drawer (Fase 5): los tokens `{{nombre}}` deben renderizarse con el chip rosa sakura definido en `@CLAUDE.md` (`--color-sakura` + transparencia).
+- No introducir esta UI en Fase 9 si las fases 3-5 no están implementadas; si lo están, asegurar que los chips respetan el token `sakura` y no hardcodean `#FFB7C5`.
+
+### 9.5 Layout general
+- Verificar que el layout de 3 paneles (sidebar | gallery | viewer) en desktop coincide con proporciones del mockup.
+- Separador vertical entre paneles: verificar que existe (el SVG usa `rect x="80" width="1"` entre sidebar y gallery, y `x="205"` entre gallery y viewer).
+- Altura mínima: el mockup sugiere que el layout ocupa todo el viewport sin scroll lateral.
+
+### 9.6 Tipografía y espaciado
+- Verificar que todos los textos en UI (títulos de card, sidebar, badges) usan la font-family definida (`Inter` vía `--font-sans`).
+- Verificar que no hay fuentes ni tamaños inconsistentes con el diseño.
+
+### 9.7 Token audit
+- Escanear todo el código en busca de `#FFB7C5` hardcodeado (debe estar solo en `globals.css` como `--color-sakura`; los componentes usan `text-sakura`, `bg-sakura`, `border-sakura` o el emoji 🌸).
+- Escanear cualquier otro hardcode de color que deba ser token (grises, bordes, fondos).
+
+### 9.8 Validación contra el HTML standalone
+- Abrir `design/Sakura Prompt Studio _standalone_.html` en navegador (o vía `@design/...` en Claude/OpenCode).
+- Comparar visualmente cada panel de la app con el mockup: sidebar, cards, viewer, chips, espaciado.
+- Ajustar hasta que la diferencia sea despreciable, dentro de lo que permite la implementación real (vs el mockup estático).
+
+**Dependencias:** Fase 8 (requiere todas las UI funcionales: galería, visor, editor, drawer, skills, agente, tags).
+
+**Hecho cuando:** la app renderizada en el navegador se aproxima visualmente al mockup `design/Sakura Prompt Studio _standalone_.html` dentro de un margen de tolerancia <5 px en espaciados y colores, sin romper las reglas estéticas de `@CLAUDE.md` ni introducir funcionalidad de fases posteriores.
 
 ---
 
-## Fase 10 — Multi-user ready
+## Fase 10 — Sakura Experience (animaciones)
+
+**Objetivo:** la capa estética que diferencia el producto. Se hace al final porque el pulido visual de Fase 9 debe estar completo antes de añadir animación.
+
+**Responsabilidades:**
+- Lluvia de pétalos (Framer Motion) disparada al copiar exitosamente desde Drawer o vista principal. Duración ~1.5s, no intrusiva.
+- Hover glow rosa difuso en cards de la galería (el efecto visual que el mockup `design/...` muestra como borde/halo rosa).
+- Pulir easing del Drawer y de transiciones entre Rendered ⇄ Raw.
+- Verificar que el rosa Sakura solo aparece en los 3 usos permitidos (hover cards, chips de variables, animaciones de feedback).
+
+**Dependencias:** Fase 9 (requiere el layout pixel-perfect como base para las animaciones).
+
+---
+
+## Fase 11 — Multi-user ready
 
 **Objetivo:** dejar el flag de auth listo para activar cuando quieras compartir la herramienta.
 
@@ -211,7 +267,7 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 ---
 
-## Fase 11 — Despliegue
+## Fase 12 — Despliegue
 
 **Objetivo:** producto público en una URL.
 
@@ -230,11 +286,10 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 ```
 0 → 0.5 → 1 → 2 → 3 → 4 → 5 (MVP)
-                      4 → 6 → 7
-                      4 → 8
-                      4 → 10
-                  2,5 → 9
-              todas → 11
+              4 → 6 → 7
+              4 → 8 → 9 → 10
+              4 → 11
+      todas → 12
 ```
 
-Las fases 6, 7, 8, 9 y 10 pueden abordarse en cualquier orden tras la 5, según prioridad.
+Las fases 6, 7, 8, 9, 10, 11 pueden abordarse en cualquier orden tras la 5, según prioridad, **excepto Fase 9 (Pixel Perfect) que debe preceder a Fase 10 (Sakura Experience)**, ya que las animaciones se aplican sobre un layout visualmente estable.
