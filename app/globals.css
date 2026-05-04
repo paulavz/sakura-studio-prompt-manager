@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sakura: #FFB7C5;
+  --color-background: #FFFFFF;
+  --color-foreground: #000000;
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  --spacing: 0.25rem;
+  --spacing-generous: 2rem;
+
+  --border-width: 1px;
+  --border-color: #E5E5E5;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
