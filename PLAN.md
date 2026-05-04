@@ -1,6 +1,6 @@
 # 🌸 Sakura Prompt Studio — Plan de Implementación por Fases
 
-Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entrega valor verificable. Prioridad: **funcional rápido > completo**. Decisiones técnicas y de UX están definidas en `CLAUDE.md`; este documento solo orquesta el orden.
+Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entrega valor verificable. Prioridad: **funcional rápido > completo**. Decisiones técnicas y de UX están definidas en `CLAUDE.md`; este documento solo orquesta el orden. La **referencia de diseño** tiene **dos accesos** (URL Anthropic + HTML en `design/`) descritos en `CLAUDE.md` — úsalos en prompts con **`@CLAUDE.md`** y **`@design/...`** (OpenCode, Cursor, Claude Code, etc.).
 
 **Hito MVP usable:** al terminar la **Fase 5** ya tienes la herramienta sirviéndote para tu trabajo diario (gallery + edición + variables drawer). Las fases 6–11 son enriquecimiento.
 
@@ -12,11 +12,12 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 
 **Responsabilidades:**
 - Inicializar Next.js 14 con App Router y Tailwind.
+- **Referencia visual en repo:** mantener el mockup exportado como HTML standalone bajo `design/` (p. ej. `design/Sakura Prompt Studio _standalone_.html`), alineado con la sección *Referencia de diseño* de `CLAUDE.md` (**URL + archivo local** — accesible vía `@design/...` en Claude Code, OpenCode, Cursor, etc.).
 - Definir tokens de diseño en `tailwind.config.ts`: color `sakura` (`#FFB7C5`), familias `Inter` y `JetBrains Mono`, escala de espaciado generosa, borde 1px sutil como default.
 - Cargar fuentes vía `next/font`.
 - Layout raíz con fondo `#FFFFFF` y tipografía negra global.
-- Estructura base de carpetas: `app/`, `components/`, `lib/`.
-- README mínimo apuntando a `CLAUDE.md` como fuente de verdad.
+- Estructura base de carpetas: `app/`, `components/`, `lib/` (y `design/` para el mockup).
+- README mínimo apuntando a `CLAUDE.md` como fuente de verdad e indicando que el diseño vive también en `design/*.html`.
 
 **Dependencias:** ninguna.
 
@@ -68,8 +69,9 @@ Plan secuencial desde proyecto vacío hasta producto desplegado. Cada fase entre
 **Objetivo:** entrar a la app y ver visualmente todos los items existentes, navegables por categoría. Sin editar todavía.
 
 **Responsabilidades:**
-- Insertar manualmente 5–10 items semilla desde el dashboard de Supabase (Table Editor) o vía SQL, asignando `owner` = id del usuario v1.
+- Insertar manualmente 5–10 items semilla desde el dashboard de Supabase (Table Editor) o vía SQL, asignando `owner` = id del usuario v1 (alternativa reproducible: `supabase/seed.sql` si existe en el repo).
 - Página `/` con sidebar de categorías + grid de cards.
+- **Paridad de diseño:** alinear layout, densidad y jerarquía con la referencia en `CLAUDE.md` — **ambos accesos** (URL Anthropic + `@design/Sakura Prompt Studio _standalone_.html` o el HTML vigente en `design/`) para validación en Claude Code, OpenCode u otras herramientas.
 - Cards minimalistas: solo título + chips de tags. Sin glow ni animaciones todavía (van en Fase 9).
 - Búsqueda fuzzy local por título (filtro client-side sobre los items ya cargados).
 - Toggle "Solo favoritos".

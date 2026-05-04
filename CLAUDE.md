@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to **Claude Code** (claude.ai/code), **OpenCode**, and other AI coding assistants when working with code in this repository.
 
 # 🌸 Sakura Prompt Studio
 
@@ -23,7 +23,23 @@ Dashboard de gestión de prompts con estética Japandi. Permite organizar, param
 
 ## Referencia de diseño (no negociable)
 
+El mockup de Sakura Prompt Studio tiene **dos accesos** al mismo diseño; el agente o la desarrolladora deben usar **al menos uno** visible en contexto. Si la URL no carga en el IDE, el HTML del repo es la referencia visual operativa.
+
+### 1. URL (Anthropic Design)
+
+Útil cuando el entorno abre enlaces Anthropic o para revisión humana en el navegador:
+
 `https://api.anthropic.com/v1/design/h/f-3unLnvyiTxyFB_I9cZUQ?open_file=Sakura+Prompt+Studio.html`
+
+### 2. HTML standalone en el repositorio (recomendado para agentes)
+
+**Claude Code, OpenCode, Cursor, etc.:** adjuntar el archivo con `@` (ruta desde la raíz del repo) para que el layout entre en contexto **sin** depender de fetch a dominios externos:
+
+`design/Sakura Prompt Studio _standalone_.html`
+
+*(Export: Anthropic Design → «Export as standalone HTML»; el nombre del archivo puede variar ligeramente, pero debe vivir bajo `design/` y mantenerse versionado.)*
+
+**Prioridad:** reglas textuales de esta sección **siempre** aplican; la paridad visual se valida contra **URL y/o HTML local** según lo que cada herramienta pueda leer.
 
 Reglas estéticas:
 
