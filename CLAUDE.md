@@ -2,6 +2,10 @@
 
 This file provides guidance to **Claude Code** (claude.ai/code), **OpenCode**, and other AI coding assistants when working with code in this repository.
 
+## Language rule
+
+**All code, comments, variable names, test names, commit messages, and assistant responses in this project must be in English.** No exceptions — including inline comments, error messages, console logs, and any text written by the AI agent.
+
 # 🌸 Sakura Prompt Studio
 
 Dashboard de gestión de prompts con estética Japandi. Permite organizar, parametrizar (variables `{{ }}`), asignar un agente e inyectar skills sobre prompts en un flujo minimalista.

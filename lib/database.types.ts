@@ -5,12 +5,18 @@ export type ItemCategory =
   | "agente"
   | "skill";
 
+export interface AppliedSkill {
+  id: string;
+  name: string;
+}
+
 export interface Item {
   id: string;
   title: string;
   content: string;
   category: ItemCategory;
   tags: string[];
+  applied_skills: AppliedSkill[];
   is_favorite: boolean;
   owner: string;
   created_at: string;

@@ -2,7 +2,7 @@
 --
 -- INSTRUCCIONES:
 -- 1. Copia tu UUID de usuario v1 desde Supabase Dashboard → Auth → Users.
--- 2. Reemplaza '<V1_USER_UUID>' abajo con ese valor (incluye las comillas).
+-- 2. Reemplaza 'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c' abajo con ese valor (incluye las comillas).
 -- 3. Ejecuta este script en Supabase Dashboard → SQL Editor → New query.
 --
 -- Nota: si ya tienes items creados manualmente, puedes saltar este archivo.
@@ -15,7 +15,7 @@ values
     'plan',
     '["testing", "playwright"]'::jsonb,
     true,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Template PR Review',
@@ -23,7 +23,7 @@ values
     'template',
     '["code_review", "git"]'::jsonb,
     false,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Generar HTML semántico',
@@ -31,7 +31,7 @@ values
     'data_output',
     '["frontend", "html"]'::jsonb,
     false,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Agente — Senior Frontend',
@@ -39,7 +39,7 @@ values
     'agente',
     '["rol", "frontend"]'::jsonb,
     true,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Skill — Validación de forms',
@@ -47,7 +47,7 @@ values
     'skill',
     '["forms", "ux"]'::jsonb,
     false,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Automatización n8n',
@@ -55,7 +55,7 @@ values
     'template',
     '["automation", "n8n"]'::jsonb,
     false,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Salida Excel desde Python',
@@ -63,7 +63,7 @@ values
     'data_output',
     '["python", "excel"]'::jsonb,
     false,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   ),
   (
     'Plan de migración de BD',
@@ -71,5 +71,5 @@ values
     'plan',
     '["database", "migration"]'::jsonb,
     true,
-    '<V1_USER_UUID>'::uuid
+    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
   );
