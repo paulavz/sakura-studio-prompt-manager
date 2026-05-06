@@ -155,10 +155,12 @@ Paralelo a Skills pero con semántica distinta: un agente define **quién ejecut
 - Al seleccionar un agente, **solo se inyecta texto en el editor** (no guarda en DB). La línea se inserta al **inicio** del `content` (la persona se establece antes de la tarea — práctica estándar):
 
   ```
-  Actúa como el agente [Nombre del Agente] para este desarrollo.\n\n
+  Actúa como el agente «Nombre del Agente» para este desarrollo.\n\n
   ```
 
-- **Reemplazo automático:** si ya hay un agente asignado y se elige otro, eliminar la línea anterior y escribir la nueva. El detector escanea la línea `Actúa como el agente [X] para este desarrollo.` al inicio del `content`. Si el usuario la movió manualmente o la borró, se trata como "sin agente".
+  Los separadores `«»` (guillemets U+00AB/U+00BB) se eligieron porque NO son caracteres especiales de Markdown y sobreviven el ciclo markdown → Tiptap → Turndown sin alterar los delimitadores. Los corchetes `[]` fueron descartados porque Turndown los escapa a `\[/\]`, rompiendo la detección después del primer guardado en modo Rendered.
+
+- **Reemplazo automático:** si ya hay un agente asignado y se elige otro, eliminar la línea anterior y escribir la nueva. El detector escanea la línea `Actúa como el agente «X» para este desarrollo.` al inicio del `content`. Si el usuario la movió manualmente o la borró, se trata como "sin agente".
 - El usuario debe pulsar **Guardar** para que la asignación persista (genera nueva versión).
 - **Panel "Agente asignado":** badge propio en la vista del item, separado del panel de Skills.
   - Si hay agente detectado en el `content` guardado → muestra el nombre.
@@ -226,6 +228,6 @@ Paralelo a Skills pero con semántica distinta: un agente define **quién ejecut
 Las siguientes decisiones se tomaron por defecto y deben confirmarse antes/durante implementación:
 
 1. Detección de skills aplicadas vía scan literal del string `Usa la skill [X] para este desarrollo.` (única vía dado que la inyección es append de texto plano).
-2. Detección de agente asignado vía scan literal de `Actúa como el agente [X] para este desarrollo.` al inicio del `content` (mismo principio que skills).
+2. Detección de agente asignado vía scan literal de `Actúa como el agente «X» para este desarrollo.` al inicio del `content` (separador `«»` elegido por ser invisible para Turndown; ver §2-bis).
 3. Tiptap como editor WYSIWYG del modo rendered.
 4. Tabla separada `tags` en Postgres (vs. derivar de `items.tags jsonb`).

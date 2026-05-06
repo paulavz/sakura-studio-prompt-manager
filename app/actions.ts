@@ -173,3 +173,24 @@ export async function getSkills(
 
   return data;
 }
+
+export async function getAgents(
+  ownerId: string = DEFAULT_OWNER
+): Promise<{ id: string; title: string }[]> {
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
+    .from("items")
+    .select("id, title")
+    .eq("owner", ownerId)
+    .eq("category", "agente")
+    .neq("title", "")
+    .order("title");
+
+  if (error) {
+    console.warn("Failed to fetch agents:", error.message);
+    return [];
+  }
+
+  return data;
+}

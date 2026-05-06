@@ -291,8 +291,10 @@ def test_h1_history_panel(page):
     page.wait_for_selector("text=Saved", timeout=5000)
     page.wait_for_selector("text=Saved", state="detached", timeout=4000)
     
-    page.click("button:has-text('History')")
-    page.wait_for_selector("text=Version history", timeout=3000)
+    # Panel may already be visible after save; only click if hidden
+    if page.locator("[data-testid='version-history']").count() == 0:
+        page.click("button:has-text('History')")
+    page.wait_for_selector("[data-testid='version-history']", timeout=3000)
     page.wait_for_function("""() => Array.from(document.querySelectorAll('button'))
         .filter(b => b.textContent.includes('Restore')).length >= 2""", timeout=10000)
     versions = page.locator("button:has-text('Restore')")
@@ -434,8 +436,10 @@ def test_k3_mode_switch_after_version_restore(page):
     page.wait_for_selector("text=Saved", timeout=3000)
     page.wait_for_selector("text=Saved", state="detached", timeout=4000)
     
-    page.click("button:has-text('History')")
-    page.wait_for_selector("text=Version history", timeout=3000)
+    # Panel may already be visible after save; only click if hidden
+    if page.locator("[data-testid='version-history']").count() == 0:
+        page.click("button:has-text('History')")
+    page.wait_for_selector("[data-testid='version-history']", timeout=3000)
     page.wait_for_function("""() => Array.from(document.querySelectorAll('button'))
         .filter(b => b.textContent.includes('Restore')).length >= 2""", timeout=10000)
     versions = page.locator("button:has-text('Restore')")
@@ -721,8 +725,10 @@ def test_l2_restore_version_then_cancel(page):
     page.wait_for_selector("text=Saved", timeout=3000)
     time.sleep(2.5)  # Wait for Saved to disappear before restore
     
-    page.click("button:has-text('History')")
-    page.wait_for_selector("text=Version history", timeout=3000)
+    # Panel may already be visible after save; only click if hidden
+    if page.locator("[data-testid='version-history']").count() == 0:
+        page.click("button:has-text('History')")
+    page.wait_for_selector("[data-testid='version-history']", timeout=3000)
     versions = page.locator("button:has-text('Restore')")
     versions.nth(1).click()
     page.wait_for_selector("text=Saved", timeout=3000)

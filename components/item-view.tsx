@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -15,8 +15,10 @@ import { isValidSlug } from "@/lib/tags";
 import { markdownToHtml, htmlToMarkdown } from "@/lib/markdown";
 import { hasVariables } from "@/lib/variables";
 import { applySkill } from "@/lib/skills";
+import { extractAgent, applyAgent, removeAgent, normalizeAgentTitle } from "@/lib/agent";
 import { VariableDrawer } from "@/components/variable-drawer";
 import { SkillSelector } from "@/components/skill-selector";
+import { AgentSelector } from "@/components/agent-selector";
 
 interface ItemViewProps {
   item: Item;
@@ -65,10 +67,13 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
   const [copied, setCopied] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [skillSelectorOpen, setSkillSelectorOpen] = useState(false);
+  const [agentSelectorOpen, setAgentSelectorOpen] = useState(false);
   const saveSuccessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const draftAppliedSkillIds = appliedSkills.map((s) => s.id);
+  const committedAgent = extractAgent(committed.content);
+  const currentAgentName = extractAgent(editedContent);
 
   const isContentDirty =
     editedContent !== committed.content ||
@@ -89,6 +94,16 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
       setSaveError(null);
     },
   });
+
+  const setMarkdown = useCallback(
+    (md: string) => {
+      setEditedContent(md);
+      if (editor) {
+        editor.commands.setContent(markdownToHtml(md), { emitUpdate: false });
+      }
+    },
+    [editor]
+  );
 
   useEffect(() => {
     getTags().then(setAvailableTags);
@@ -153,6 +168,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
         saveSuccessTimeoutRef.current = setTimeout(() => setSaveSuccess(false), 2000);
         const newVersions = await getItemVersions(item.id);
         setVersions(newVersions);
+        setShowHistory(true);
         return true;
       } else {
         setSaveError(result.error || errorPrefix);
@@ -168,15 +184,12 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
   };
 
   const handleCancel = () => {
-    setEditedContent(committed.content);
     setTitle(committed.title);
     setCategory(committed.category);
     setTags([...committed.tags]);
     setAppliedSkills([...committed.appliedSkills]);
     setIsFavorite(committed.isFavorite);
-    if (editor) {
-      editor.commands.setContent(markdownToHtml(committed.content), { emitUpdate: false });
-    }
+    setMarkdown(committed.content);
     setSaveError(null);
   };
 
@@ -209,12 +222,8 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
   };
 
   const handleRestoreVersion = async (snapshot: string, snapshotAppliedSkills: AppliedSkill[]) => {
-    setEditedContent(snapshot);
     setAppliedSkills(snapshotAppliedSkills);
-    if (editor) {
-      editor.commands.setContent(markdownToHtml(snapshot), { emitUpdate: false });
-    }
-
+    setMarkdown(snapshot);
     await commitSave(snapshot, snapshotAppliedSkills, "Error restoring");
     setShowHistory(false);
   };
@@ -233,13 +242,19 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
   const handleAddSkill = (skill: { id: string; title: string }) => {
     const result = applySkill(editedContent, appliedSkills, skill.id, skill.title);
     if (result === null) return;
-
-    setEditedContent(result.content);
     setAppliedSkills(result.appliedSkills);
-    if (editor) {
-      editor.commands.setContent(markdownToHtml(result.content), { emitUpdate: false });
-    }
+    setMarkdown(result.content);
+    setSaveError(null);
+  };
 
+  const handleAssignAgent = ({ title }: { title: string }) => {
+    if (currentAgentName && normalizeAgentTitle(currentAgentName) === normalizeAgentTitle(title)) return;
+    setMarkdown(applyAgent(editedContent, title));
+    setSaveError(null);
+  };
+
+  const handleUnassignAgent = () => {
+    setMarkdown(removeAgent(editedContent));
     setSaveError(null);
   };
 
@@ -400,10 +415,20 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
           </button>
           {category !== "skill" && (
             <button
+              id="add-skill-btn"
               onClick={() => setSkillSelectorOpen(true)}
               className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
             >
               Add Skill
+            </button>
+          )}
+          {category !== "agente" && category !== "skill" && (
+            <button
+              id="assign-agent-btn"
+              onClick={() => setAgentSelectorOpen(true)}
+              className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
+            >
+              Assign Agent
             </button>
           )}
           {hasVariables(committed.content) && (
@@ -442,7 +467,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
 
       {/* History Panel */}
       {showHistory && (
-        <div className="border-b border-gray-200 bg-gray-50 p-6">
+        <div data-testid="version-history" className="border-b border-gray-200 bg-gray-50 p-6">
           <h3 className="mb-3 text-sm font-medium text-gray-700">Version history</h3>
           {versions.length === 0 ? (
             <p className="text-sm text-gray-500">No saved versions.</p>
@@ -451,6 +476,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
               {versions.map((v) => (
                 <div
                   key={v.id}
+                  data-testid="version-entry"
                   className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3"
                 >
                   <div className="flex-1 min-w-0">
@@ -497,6 +523,40 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
         </div>
       )}
 
+      {/* Assigned Agent badge — only for categories that support agent assignment */}
+      {category !== "agente" && category !== "skill" && (
+        <div
+          data-testid="assigned-agent-badge"
+          className="border-b border-gray-200 bg-gray-50 px-8 py-3 flex items-center gap-2"
+        >
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Agent:</span>
+          {committedAgent ? (
+            currentAgentName ? (
+              <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700">
+                {committedAgent}
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-400 line-through">
+                {committedAgent}
+                <span className="ml-1 text-gray-300">(removing)</span>
+              </span>
+            )
+          ) : (
+            <span className="text-xs text-gray-400">Sin agente asignado</span>
+          )}
+          {committedAgent && (
+            <button
+              data-testid="unassign-agent-btn"
+              aria-label="Remove agent"
+              onClick={handleUnassignAgent}
+              className="ml-1 text-xs text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              × Remove
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Content */}
       <main className="p-8">
         {mode === "rendered" ? (
@@ -528,6 +588,13 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
         onClose={() => setSkillSelectorOpen(false)}
         onSelect={handleAddSkill}
         appliedSkillIds={draftAppliedSkillIds}
+      />
+
+      <AgentSelector
+        isOpen={agentSelectorOpen}
+        onClose={() => setAgentSelectorOpen(false)}
+        onSelect={handleAssignAgent}
+        currentAgentName={currentAgentName}
       />
     </div>
   );
