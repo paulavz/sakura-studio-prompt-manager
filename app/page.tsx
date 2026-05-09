@@ -31,14 +31,5 @@ export default async function HomePage() {
     tags: Array.isArray(row.tags) ? (row.tags as string[]) : [],
   }));
 
-  return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200 px-8 py-4">
-        <h1 className="text-lg font-semibold tracking-tight text-black">
-          Sakura Prompt Studio
-        </h1>
-      </header>
-      <Gallery items={typedItems} />
-    </div>
-  );
+  return <Gallery items={typedItems} minVarLength={Number(process.env.MIN_VAR_LENGTH ?? 1)} maxVarLength={Number(process.env.MAX_VAR_LENGTH ?? 4000)} />;
 }

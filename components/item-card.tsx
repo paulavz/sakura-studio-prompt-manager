@@ -6,22 +6,21 @@ import { hasVariables } from "@/lib/variables";
 
 interface ItemCardProps {
   item: Item;
+  onSelect?: (item: Item) => void;
+  isSelected?: boolean;
 }
 
-export function ItemCard({ item }: ItemCardProps) {
+export function ItemCard({ item, onSelect, isSelected }: ItemCardProps) {
   const hasVars = hasVariables(item.content);
 
-  return (
-    <Link
-      href={`/items/${item.id}`}
-      className="group block rounded-lg border border-gray-200 bg-white p-6 transition-colors hover:border-gray-300"
-    >
+  const cardContent = (
+    <>
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base font-semibold text-black">
+        <h3 className="text-sm font-semibold text-black">
           {item.title}
         </h3>
         {hasVars && (
-          <span className="shrink-0 text-sm" aria-label="Contiene variables">
+          <span className="shrink-0 text-sm" aria-label="Contains variables">
             🌸
           </span>
         )}
@@ -32,13 +31,38 @@ export function ItemCard({ item }: ItemCardProps) {
           {item.tags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center rounded-full border border-gray-200 px-2.5 py-0.5 text-xs text-gray-600"
+              data-testid="tag-chip"
+              className="inline-flex items-center rounded-sm border border-gray-line bg-gray-surface px-2 py-0.5 text-xs text-gray-600"
             >
               {tag}
             </span>
           ))}
         </div>
       )}
+    </>
+  );
+
+  const baseClasses = `group block w-full rounded-md border transition-colors p-3 ${
+    isSelected ? "border-sakura border-[1.5px]" : "border-gray-line"
+  }`;
+
+  if (onSelect) {
+    return (
+      <button
+        onClick={() => onSelect(item)}
+        className={baseClasses}
+      >
+        {cardContent}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={`/items/${item.id}`}
+      className={baseClasses}
+    >
+      {cardContent}
     </Link>
   );
 }

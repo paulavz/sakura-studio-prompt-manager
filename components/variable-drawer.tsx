@@ -218,7 +218,7 @@ export function VariableDrawer({
                           placeholder={`Value for ${name}…`}
                           style={{
                             background: value
-                              ? "rgba(255,183,197,0.06)"
+                              ? "var(--color-sakura-6)"
                               : undefined,
                           }}
                         />

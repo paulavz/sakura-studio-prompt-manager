@@ -259,7 +259,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div data-region="viewer" className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">

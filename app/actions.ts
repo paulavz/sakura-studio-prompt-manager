@@ -4,10 +4,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ItemCategory } from "@/lib/database.types";
 import { isValidSlug } from "@/lib/tags";
 import { saveItemComplete } from "@/lib/versioning";
+import { DEFAULT_OWNER } from "@/lib/env";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-
-const DEFAULT_OWNER = process.env.NEXT_PUBLIC_V1_USER_UUID || "";
 
 const CATEGORIES: ItemCategory[] = [
   "template",
@@ -106,15 +105,9 @@ export async function getTags(ownerId: string = DEFAULT_OWNER): Promise<string[]
 }
 
 export async function createTag(
-  label: string,
+  slug: string,
   ownerId: string = DEFAULT_OWNER
 ): Promise<{ success: boolean; slug?: string; error?: string }> {
-  const slug = label
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_]/g, "")
-    .replace(/^[0-9]/, "tag_$&");
-
   if (!isValidSlug(slug)) {
     return { success: false, error: "Invalid slug format" };
   }
@@ -123,12 +116,17 @@ export async function createTag(
 
   const { error } = await admin.from("tags").insert({
     slug,
-    label,
     owner: ownerId,
   });
 
-  if (error && !error.message.includes("duplicate")) {
-    return { success: false, error: error.message };
+  if (error) {
+    if (error.code === "23505") {
+      return { success: false, error: "Tag already exists" };
+    }
+    if (error.code === "23514") {
+      return { success: false, error: "Invalid slug format" };
+    }
+    return { success: false, error: "Failed to create tag" };
   }
 
   return { success: true, slug };
@@ -172,6 +170,84 @@ export async function getSkills(
   }
 
   return data;
+}
+
+export async function getTagsWithUsage(
+  ownerId: string = DEFAULT_OWNER
+): Promise<{ id: string; slug: string; usage_count: number }[]> {
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.rpc("get_tags_with_usage", {
+    p_owner_id: ownerId,
+  });
+
+  if (error) {
+    console.warn("Failed to fetch tags:", error.message);
+    return [];
+  }
+
+  if (!data) return [];
+
+  return data.map((row: { id: string; slug: string; usage_count: number }) => ({
+    id: row.id,
+    slug: row.slug,
+    usage_count: row.usage_count,
+  }));
+}
+
+export async function deleteTag(
+  id: string,
+  ownerId: string = DEFAULT_OWNER
+): Promise<{ success: boolean; error?: string }> {
+  const admin = createAdminClient();
+
+  const { error } = await admin.rpc("delete_tag_safe", {
+    p_tag_id: id,
+    p_owner_id: ownerId,
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath("/settings/tags");
+  return { success: true };
+}
+
+export async function renameTag(
+  id: string,
+  newSlug: string,
+  ownerId: string = DEFAULT_OWNER
+): Promise<{ success: boolean; error?: string }> {
+  const slug = newSlug.trim();
+
+  if (!isValidSlug(slug)) {
+    return { success: false, error: "Invalid slug format" };
+  }
+
+  const admin = createAdminClient();
+
+  const { data, error } = await admin.rpc("rename_tag", {
+    p_tag_id: id,
+    p_new_slug: slug,
+    p_owner_id: ownerId,
+  });
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  // NOTE: one revalidatePath per affected item. Acceptable for v1 with few items.
+  // v2 may switch to revalidateTag for a single global items tag.
+  if (Array.isArray(data)) {
+    for (const row of data) {
+      revalidatePath(`/items/${row.affected_item_id}`);
+    }
+  }
+
+  revalidatePath("/settings/tags");
+  revalidatePath("/");
+  return { success: true };
 }
 
 export async function getAgents(

@@ -13,7 +13,13 @@ export function markdownToHtml(markdown: string): string {
       /^(#{1,6})([^#\s])/gm,
       "$1 $2"
     );
-    return marked.parse(normalized, { async: false }) as string;
+    let html = marked.parse(normalized, { async: false }) as string;
+    // Render {{variable}} syntax as styled chips for visual consistency
+    html = html.replace(
+      /\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g,
+      '<span data-testid="variable-chip" style="display:inline-flex;align-items:center;border-radius:0.25rem;padding:0.125rem 0.375rem;font-size:0.75rem;background-color:var(--color-sakura-20);border:1px solid var(--color-sakura-50);color:var(--color-variable-text);font-family:var(--font-mono);">{{$1}}</span>'
+    );
+    return html;
   } catch {
     return markdown;
   }
