@@ -2,9 +2,12 @@ import { Locator, expect, Page } from "@playwright/test";
 
 // Helper to normalize color values (rgb, rgba, hex) for comparison.
 function normalizeColor(color: string): string {
-  if (color.startsWith("#")) {
-    // Convert hex to rgba
-    let hex = color.slice(1);
+  // Normalize by removing all spaces and converting everything to a standard format
+  const normalized = color.replace(/\s+/g, '');
+  
+  if (normalized.startsWith("#")) {
+    // Convert hex to rgb
+    let hex = normalized.slice(1);
     if (hex.length === 3) {
       hex = hex.split("").map((char) => char + char).join("");
     }
@@ -12,18 +15,16 @@ function normalizeColor(color: string): string {
     const g = parseInt(hex.substring(2, 4), 16);
     const b = parseInt(hex.substring(4, 6), 16);
     return `rgb(${r},${g},${b})`;
-  } else if (color.startsWith("rgb(")) {
-    // Normalize rgb to remove whitespace
-    return color.replace(/, /g, ",");
-  } else if (color.startsWith("rgba(")) {
-    // Normalize rgba to remove whitespace and handle full opacity if alpha is 1
-    const parts = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+  } else if (normalized.startsWith("rgb(")) {
+    return normalized;
+  } else if (normalized.startsWith("rgba(")) {
+    const parts = normalized.match(/rgba\((\d+),(\d+),(\d+),([\d.]+)\)/);
     if (parts && parseFloat(parts[4]) === 1) {
       return `rgb(${parts[1]},${parts[2]},${parts[3]})`;
     }
-    return color.replace(/, /g, ",");
+    return normalized;
   }
-  return color; // Return as is if neither hex nor rgb/rgba
+  return normalized;
 }
 
 /**
@@ -38,10 +39,15 @@ export async function expectColorToken(
   prop: string,
   expected: string,
 ) {
+  console.log(`Debug: evaluating ${prop} on locator: ${locator}`);
   const computedStyle = await locator.evaluate(
-    (el, prop) => getComputedStyle(el)[prop],
+    (el, prop) => {
+      console.log(`Debug: element found, tag: ${el.tagName}`);
+      return getComputedStyle(el)[prop];
+    },
     prop,
   );
+  console.log(`Debug: computed style for ${prop}: ${computedStyle}`);
   expect(normalizeColor(computedStyle)).toBe(normalizeColor(expected));
 }
 

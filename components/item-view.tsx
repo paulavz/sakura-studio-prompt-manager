@@ -24,6 +24,7 @@ interface ItemViewProps {
   item: Item;
   minVarLength?: number;
   maxVarLength?: number;
+  embedded?: boolean;
 }
 
 interface Version {
@@ -38,7 +39,7 @@ function asItemCategory(value: string): ItemCategory {
   return "template";
 }
 
-export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemViewProps) {
+export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded = false }: ItemViewProps) {
   const [mode, setMode] = useState<"rendered" | "raw">("rendered");
 
   const [committed, setCommitted] = useState({
@@ -263,10 +264,12 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
       {/* Header */}
       <header className="border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">
-          <Link href="/" className="text-sm text-gray-600 hover:text-black transition-colors">
-            ← Back to gallery
-          </Link>
-          <div className="flex items-center gap-3">
+          {!embedded && (
+            <Link href="/" className="text-sm text-gray-600 hover:text-black transition-colors">
+              ← Back to gallery
+            </Link>
+          )}
+          <div className={`flex items-center gap-3 ${embedded ? "flex-1" : ""}`}>
             <button
               onClick={handleToggleFavorite}
               className="text-lg transition-transform hover:scale-110"
@@ -281,7 +284,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000 }: ItemVi
                 setTitle(e.target.value);
                 setSaveError(null);
               }}
-              className="text-lg font-semibold tracking-tight text-black bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-gray-300 rounded px-1 -ml-1"
+              className="text-lg font-semibold tracking-tight text-black bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-gray-300 rounded px-1 -ml-1 flex-1"
             />
           </div>
           <div className="w-20" />

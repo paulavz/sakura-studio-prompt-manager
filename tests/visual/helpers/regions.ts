@@ -21,7 +21,7 @@ export const REGIONS = {
  * All pixel values are from the viewBox 0 0 400 280.
  */
 export const MOCKUP_VALUES = {
-  sidebarWidth: 80,
+  sidebarWidth: 224,
   galleryStart: 85,
   viewerStart: 205,
   separatorColor: "#E8E8E8",
