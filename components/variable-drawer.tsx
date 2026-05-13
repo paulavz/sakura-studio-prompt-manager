@@ -222,6 +222,9 @@ export function VariableDrawer({
                             {error}
                           </span>
                         )}
+                        <span className="text-[10px] text-gray-400 self-end">
+                          {value.length} / {maxVarLength}
+                        </span>
                       </div>
                     );
                   })}
