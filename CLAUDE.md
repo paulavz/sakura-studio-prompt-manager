@@ -94,6 +94,7 @@ Tabla separada para gestión limpia desde Settings.
 - Supabase trae el schema `auth` con la tabla `auth.users` lista.
 - **v1 (uso personal):** una única cuenta personal creada manualmente desde el dashboard de Supabase. UI de login deshabilitada (la sesión se establece una vez en el navegador y se guarda; o se trabaja vía service role en server actions). El `owner` de cada item es **el `id` de esa cuenta**.
 - **v2 (multi-user):** flipear flag `NEXT_PUBLIC_AUTH_ENABLED` y exponer login (Supabase Auth UI o un formulario propio). El campo `owner` ya está listo desde día 1, no requiere migración.
+  > Antes de activar el flag: refactorizar server actions para no aceptar `ownerId` del caller. Derivar de `auth.getUser()` en server y/o sustituir admin client por server client con scope de sesión.
 - **RLS obligatoria desde el inicio** en `items`, `versions` y `tags`. Política base:
   ```sql
   using ( owner = auth.uid() )

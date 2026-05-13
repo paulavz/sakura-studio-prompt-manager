@@ -1,5 +1,10 @@
 "use server";
 
+// TODO(v2-auth): when NEXT_PUBLIC_AUTH_ENABLED flips to true, remove the
+// `ownerId` parameter from every server action and derive owner from the
+// session (createServerClient + auth.getUser()). Admin client bypasses RLS,
+// so an authenticated caller could otherwise read another user's data.
+
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ItemCategory } from "@/lib/database.types";
 import { isValidSlug } from "@/lib/tags";
