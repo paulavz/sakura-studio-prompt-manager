@@ -5,7 +5,7 @@
  */
 
 import { test, expect } from "@playwright/test";
-import { REGIONS, MOCKUP_VALUES } from "./helpers/regions";
+import { REGIONS } from "./helpers/regions";
 import { toMatchBaseline } from "./helpers/compare-to-baseline";
 import { seed, cleanup } from "./helpers/seed";
 

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { REGIONS, MOCKUP_VALUES } from './helpers/regions';
-import { disableAnimations, expectColorToken, expectSpacingToken } from './helpers/computed-style';
+import { disableAnimations, expectColorToken } from './helpers/computed-style';
 
 test.describe('Sidebar Visual and DOM Checks', () => {
   test.beforeEach(async ({ page }) => {

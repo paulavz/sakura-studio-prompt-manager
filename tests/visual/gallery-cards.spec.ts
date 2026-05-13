@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { REGIONS, MOCKUP_VALUES } from './helpers/regions';
-import { disableAnimations, expectSpacingToken } from './helpers/computed-style';
+import { disableAnimations } from './helpers/computed-style';
 import { seed, cleanup } from './helpers/seed';
 
 test.describe('Gallery Cards Visual and DOM Checks', () => {
