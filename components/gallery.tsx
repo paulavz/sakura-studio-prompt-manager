@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Item, ItemCategory, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
 import { ItemCard } from "./item-card";
@@ -61,7 +61,7 @@ const CherryBranch = () => (
 export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: GalleryProps) {
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | "all" | "favorites">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<Item | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -80,11 +80,13 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
     });
   }, [items, selectedCategory, normalizedQuery]);
 
-  useEffect(() => {
-    if (!selectedItem && filteredItems.length > 0) {
-      setSelectedItem(filteredItems[0]);
+  const selectedItem = useMemo(() => {
+    if (selectedItemId) {
+      const found = items.find((i) => i.id === selectedItemId);
+      if (found) return found;
     }
-  }, [filteredItems, selectedItem]);
+    return filteredItems.length > 0 ? filteredItems[0] : null;
+  }, [selectedItemId, items, filteredItems]);
 
   const categoryCounts = useMemo(() => {
     const counts: Record<ItemCategory | "all" | "favorites", number> = {
@@ -287,7 +289,7 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
               <ItemCard
                 key={item.id}
                 item={item}
-                onSelect={setSelectedItem}
+                onSelect={(item) => setSelectedItemId(item.id)}
                 isSelected={selectedItem?.id === item.id}
               />
             ))

@@ -18,13 +18,12 @@ interface SkillItem {
 
 export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [] }: SkillSelectorProps) {
   const [skills, setSkills] = useState<SkillItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const dialogRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    setLoading(true);
     getSkills()
       .then(setSkills)
       .finally(() => setLoading(false));

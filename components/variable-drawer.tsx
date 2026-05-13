@@ -79,14 +79,6 @@ export function VariableDrawer({
     };
   }, [isOpen, onClose]);
 
-  // Reset values and errors when drawer closes (replaces drawerKey remount hack)
-  useEffect(() => {
-    if (!isOpen) {
-      setValues({});
-      setErrors({});
-    }
-  }, [isOpen]);
-
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   getTagsWithUsage,
   createTag,
@@ -31,7 +31,7 @@ export default function SettingsTagsPage() {
     setEditingValue("");
   };
 
-  const fetchTags = useCallback(async () => {
+  async function loadTags() {
     setLoading(true);
     try {
       const data = await getTagsWithUsage();
@@ -41,11 +41,32 @@ export default function SettingsTagsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getTagsWithUsage();
+        if (!cancelled) {
+          setTags([...data].sort((a, b) => a.slug.localeCompare(b.slug)));
+        }
+      } catch {
+        if (!cancelled) {
+          setTags([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    load();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (!editingId) return;
@@ -77,7 +98,7 @@ export default function SettingsTagsPage() {
       return;
     }
     setInput("");
-    await fetchTags();
+    await loadTags();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -105,7 +126,7 @@ export default function SettingsTagsPage() {
       return;
     }
     cancelEditing();
-    await fetchTags();
+    await loadTags();
   };
 
   const handleRenameKeyDown = (e: React.KeyboardEvent, id: string) => {
@@ -131,7 +152,7 @@ export default function SettingsTagsPage() {
     }
     setDeletingId(null);
     setDeletingSlug("");
-    await fetchTags();
+    await loadTags();
   };
 
   const handleDeleteCancel = () => {

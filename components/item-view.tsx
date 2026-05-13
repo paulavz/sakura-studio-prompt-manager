@@ -62,7 +62,6 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   const [isFavorite, setIsFavorite] = useState(item.is_favorite);
   const [appliedSkills, setAppliedSkills] = useState<AppliedSkill[]>(item.applied_skills);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [versions, setVersions] = useState<Version[]>([]);
@@ -74,7 +73,6 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   const [skillSelectorOpen, setSkillSelectorOpen] = useState(false);
   const [agentSelectorOpen, setAgentSelectorOpen] = useState(false);
   const [petalTrigger, setPetalTrigger] = useState(0);
-  const saveSuccessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const committedAgent = extractAgent(committed.content);
@@ -157,7 +155,6 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   ) => {
     setIsSaving(true);
     setSaveError(null);
-    setSaveSuccess(false);
 
     try {
       const result = await saveItem(
@@ -179,10 +176,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           appliedSkills: [...appliedSkillsToSave],
           isFavorite,
         });
-        setSaveSuccess(true);
         setPetalTrigger((prev) => prev + 1);
-        if (saveSuccessTimeoutRef.current) clearTimeout(saveSuccessTimeoutRef.current);
-        saveSuccessTimeoutRef.current = setTimeout(() => setSaveSuccess(false), 2000);
         const newVersions = await getItemVersions(item.id);
         setVersions(newVersions);
         return true;

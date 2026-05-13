@@ -26,7 +26,7 @@ export function AgentSelector({
   currentAgentName,
 }: AgentSelectorProps) {
   const [agents, setAgents] = useState<AgentItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const dialogRef = useRef<HTMLElement | null>(null);
 
   // Body scroll lock
@@ -41,7 +41,6 @@ export function AgentSelector({
   useEffect(() => {
     if (!isOpen) return;
 
-    setLoading(true);
     getAgents()
       .then((data) => {
         setAgents(data);

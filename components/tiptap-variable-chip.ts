@@ -1,7 +1,7 @@
 import { Mark, mergeAttributes } from "@tiptap/core";
 
 export interface VariableChipOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, string | number | undefined>;
 }
 
 declare module "@tiptap/core" {
