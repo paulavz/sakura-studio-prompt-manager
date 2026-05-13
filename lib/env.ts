@@ -12,3 +12,17 @@ if (!v1UserUuid) {
 }
 
 export const DEFAULT_OWNER = v1UserUuid;
+
+export function getMinVarLength(): number {
+  const raw = process.env.MIN_VAR_LENGTH;
+  if (!raw) return 1;
+  const n = parseInt(raw, 10);
+  return Number.isNaN(n) ? 1 : n;
+}
+
+export function getMaxVarLength(): number {
+  const raw = process.env.MAX_VAR_LENGTH;
+  if (!raw) return 4000;
+  const n = parseInt(raw, 10);
+  return Number.isNaN(n) ? 4000 : n;
+}

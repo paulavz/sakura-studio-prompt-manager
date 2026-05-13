@@ -48,4 +48,26 @@ test.describe("Settings navigation", () => {
     await expect(page.locator('text=template_test')).toBeVisible();
     await expect(page.locator('text=code_review')).toBeVisible();
   });
+
+  test("can navigate to Variables settings and see defaults", async ({ page }) => {
+    await page.goto("/settings/tags");
+    await page.waitForLoadState("networkidle");
+
+    // Click Variables in sub-nav
+    const variablesLink = page.locator('nav a:has-text("Variables")');
+    await expect(variablesLink).toBeVisible();
+    await variablesLink.click();
+    await page.waitForLoadState("networkidle");
+
+    // Should be on variables page
+    await expect(page.locator('[data-testid="settings-variables-page"]')).toBeVisible();
+    await expect(page.locator('h2:has-text("Variables Drawer Defaults")')).toBeVisible();
+
+    // Should show the defaults
+    await expect(page.locator('text=Minimum length')).toBeVisible();
+    await expect(page.locator('text=Maximum length')).toBeVisible();
+
+    // Hint visible
+    await expect(page.locator('text=.env.local')).toBeVisible();
+  });
 });
