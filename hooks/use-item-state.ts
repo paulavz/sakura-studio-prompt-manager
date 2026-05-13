@@ -100,8 +100,10 @@ export function useItemState(item: Item): UseItemStateReturn {
   );
 
   useEffect(() => {
-    getTags().then(setAvailableTags);
-    getItemVersions(item.id).then(setVersions);
+    let cancelled = false;
+    getTags().then((data) => { if (!cancelled) setAvailableTags(data); });
+    getItemVersions(item.id).then((data) => { if (!cancelled) setVersions(data); });
+    return () => { cancelled = true; };
   }, [item.id]);
 
   const commitSave = async (snapshot: SaveSnapshot, errorPrefix: string): Promise<boolean> => {

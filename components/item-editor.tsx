@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { VariableChip } from "./tiptap-variable-chip";
@@ -14,6 +14,8 @@ interface ItemEditorProps {
 }
 
 export function ItemEditor({ mode, value, onChange, onClearError }: ItemEditorProps) {
+  const lastEmittedRef = useRef<string | null>(null);
+
   const editor = useEditor({
     extensions: [StarterKit, VariableChip],
     content: markdownToHtml(value),
@@ -31,21 +33,22 @@ export function ItemEditor({ mode, value, onChange, onClearError }: ItemEditorPr
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(htmlToMarkdown(editor.getHTML()));
+      const md = htmlToMarkdown(editor.getHTML());
+      lastEmittedRef.current = md;
+      onChange(md);
       onClearError();
     },
   });
 
   // Sync editor when value changes from outside (cancel, restore, skill/agent injection).
-  // The guard prevents a loop: onUpdate sets value, which re-triggers this effect,
-  // but currentMd === value at that point so setContent is skipped.
+  // Skip when the value matches what we just emitted (avoids double htmlToMarkdown).
+  // Skip entirely in raw mode — the editor is hidden and the textarea owns the value.
   useEffect(() => {
-    if (!editor) return;
-    const currentMd = htmlToMarkdown(editor.getHTML());
-    if (currentMd !== value) {
-      editor.commands.setContent(markdownToHtml(value), { emitUpdate: false });
-    }
-  }, [value, editor]);
+    if (!editor || mode !== "rendered") return;
+    if (lastEmittedRef.current === value) return;
+    editor.commands.setContent(markdownToHtml(value), { emitUpdate: false });
+    lastEmittedRef.current = value;
+  }, [value, editor, mode]);
 
   if (mode === "rendered") {
     return (

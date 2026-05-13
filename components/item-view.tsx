@@ -88,6 +88,12 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
     return () => window.removeEventListener("beforeunload", handler);
   }, [isContentDirty]);
 
+  useEffect(() => {
+    return () => {
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+    };
+  }, []);
+
   const handleModeChange = (newMode: "rendered" | "raw") => {
     if (isContentDirty) return;
     setMode(newMode);
