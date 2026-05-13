@@ -7,8 +7,12 @@
 import { test, expect } from "@playwright/test";
 import { REGIONS, MOCKUP_VALUES } from "./helpers/regions";
 import { toMatchBaseline } from "./helpers/compare-to-baseline";
+import { seed, cleanup } from "./helpers/seed";
 
 test.describe("Three-pane layout", () => {
+  test.beforeAll(async () => { await seed(); });
+  test.afterAll(async () => { await cleanup(); });
+
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");

@@ -41,7 +41,7 @@ export function ItemCard({ item, onSelect, isSelected }: ItemCardProps) {
           {item.title}
         </h3>
         {hasVars && (
-          <span className="text-[13px] shrink-0 flex items-center" aria-label="Contains variables">
+          <span data-testid="variable-indicator" className="text-[13px] shrink-0 flex items-center" aria-label="Contains variables">
             🌸
           </span>
         )}
@@ -90,22 +90,24 @@ export function ItemCard({ item, onSelect, isSelected }: ItemCardProps) {
   const baseClasses = `group block w-full rounded-[8px] transition-all duration-200 ease-[cubic-bezier(0.2,0,0,1)] p-[14px_16px] relative cursor-pointer ${
     isSelected
       ? "bg-white border-transparent shadow-[0_0_0_2px_var(--color-sakura),0_4px_20px_var(--color-sakura-glow)]"
-      : "bg-white border border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.05)] hover:border-transparent hover:shadow-[0_0_0_1px_var(--color-sakura),0_8px_24px_var(--color-sakura-glow),0_2px_8px_rgba(0,0,0,0.06)] hover:-translate-y-[2px]"
+      : "bg-white border border-gray-200 hover:border-transparent hover:shadow-[0_0_0_1px_var(--color-sakura),0_8px_24px_var(--color-sakura-glow),0_2px_8px_rgba(0,0,0,0.06)] hover:-translate-y-[2px]"
   }`;
 
-  if (onSelect) {
-    return (
-      <button
-        onClick={() => onSelect(item)}
-        className={baseClasses}
-      >
-        {cardContent}
-      </button>
-    );
-  }
-
   return (
-    <div className={baseClasses}>
+    <div
+      data-testid="item-card"
+      data-has-variable={hasVars ? "true" : "false"}
+      onClick={onSelect ? () => onSelect(item) : undefined}
+      onKeyDown={onSelect ? (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(item);
+        }
+      } : undefined}
+      tabIndex={onSelect ? 0 : undefined}
+      role={onSelect ? "button" : undefined}
+      className={baseClasses}
+    >
       {cardContent}
     </div>
   );

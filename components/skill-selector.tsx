@@ -8,7 +8,7 @@ interface SkillSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (skill: SkillItem) => void;
-  appliedSkillIds?: string[];
+  appliedSkillNames?: string[];
 }
 
 interface SkillItem {
@@ -16,7 +16,7 @@ interface SkillItem {
   title: string;
 }
 
-export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillIds = [] }: SkillSelectorProps) {
+export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [] }: SkillSelectorProps) {
   const [skills, setSkills] = useState<SkillItem[]>([]);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLElement | null>(null);
@@ -50,7 +50,7 @@ export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillIds = [] 
   }, [isOpen, onClose]);
 
   const handleSelect = (skill: SkillItem) => {
-    if (appliedSkillIds.includes(skill.id)) return;
+    if (appliedSkillNames.includes(skill.title)) return;
     onSelect(skill);
     onClose();
   };
@@ -109,7 +109,7 @@ export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillIds = [] 
               ) : (
                 <div className="space-y-2">
                   {skills.map((skill) => {
-                    const isApplied = appliedSkillIds.includes(skill.id);
+                    const isApplied = appliedSkillNames.includes(skill.title);
                     return (
                       <button
                         key={skill.id}

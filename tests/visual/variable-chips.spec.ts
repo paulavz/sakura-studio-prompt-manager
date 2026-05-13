@@ -9,10 +9,15 @@ import { test, expect } from "@playwright/test";
 import { REGIONS } from "./helpers/regions";
 import { expectColorToken } from "./helpers/computed-style";
 import { toMatchBaseline } from "./helpers/compare-to-baseline";
+import { seed, cleanup } from "./helpers/seed";
 
 test.describe("Variable chips", () => {
+  test.beforeAll(async () => { await seed(); });
+  test.afterAll(async () => { await cleanup(); });
+
   test.beforeEach(async ({ page }) => {
-    await page.goto("/");
+    // Navigate directly to the seeded item with variables
+    await page.goto("/items/00000000-0000-4000-a000-000000000001");
     await page.waitForLoadState("networkidle");
     await page.addStyleTag({
       content:
@@ -22,8 +27,6 @@ test.describe("Variable chips", () => {
 
   test("variable chip matches mockup-variable-chip baseline", async ({ page }, testInfo) => {
     const chip = page.locator(REGIONS.variableChip).first();
-    const chipCount = await chip.count();
-    test.skip(chipCount === 0, "Phase 5 (variables drawer) not yet implemented — variable chips not present in DOM");
     await chip.waitFor({ state: "visible" });
     const screenshot = await chip.screenshot();
     await toMatchBaseline(screenshot, "mockup-variable-chip", testInfo.project.name, {
@@ -34,16 +37,12 @@ test.describe("Variable chips", () => {
 
   test("variable chip background equals sakura at 20% alpha", async ({ page }) => {
     const chip = page.locator(REGIONS.variableChip).first();
-    const chipCount = await chip.count();
-    test.skip(chipCount === 0, "Phase 5 (variables drawer) not yet implemented — variable chips not present in DOM");
     await chip.waitFor({ state: "visible" });
     await expectColorToken(chip, "background-color", "rgba(255, 183, 197, 0.2)");
   });
 
   test("variable chip border equals sakura at 50% alpha", async ({ page }) => {
     const chip = page.locator(REGIONS.variableChip).first();
-    const chipCount = await chip.count();
-    test.skip(chipCount === 0, "Phase 5 (variables drawer) not yet implemented — variable chips not present in DOM");
     await chip.waitFor({ state: "visible" });
     await expectColorToken(chip, "border-color", "rgba(255, 183, 197, 0.5)");
   });
@@ -52,8 +51,6 @@ test.describe("Variable chips", () => {
     page,
   }) => {
     const chip = page.locator(REGIONS.variableChip).first();
-    const chipCount = await chip.count();
-    test.skip(chipCount === 0, "Phase 5 (variables drawer) not yet implemented — variable chips not present in DOM");
     await chip.waitFor({ state: "visible" });
     const sakuraValue = await chip.evaluate((el: HTMLElement) => {
       return getComputedStyle(el).getPropertyValue("--color-sakura").trim();

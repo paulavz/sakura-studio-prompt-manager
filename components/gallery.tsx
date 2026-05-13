@@ -116,10 +116,10 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
         <div data-testid="branding-block" className="px-[14px] pt-[16px] pb-[14px] border-b border-gray-200">
           <div className="flex items-center gap-[9px]">
             <div className="w-[26px] h-[26px] rounded-[7px] bg-sakura-soft border border-sakura flex items-center justify-center">
-              <span className="text-[15px] leading-none">🌸</span>
+              <span data-testid="branding-emoji" className="text-[15px] leading-none text-sakura">🌸</span>
             </div>
-            <div>
-              <div className="text-[13px] font-semibold text-black tracking-[-0.01em] leading-tight">Sakura Studio</div>
+            <div data-testid="branding-text">
+              <div data-testid="branding-text-title" className="text-[13px] font-semibold tracking-[-0.01em] leading-tight text-sakura">Sakura Studio</div>
               <div className="text-[10px] text-gray-400 mt-[1px] leading-tight">Prompt Manager</div>
             </div>
           </div>
@@ -231,6 +231,17 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
             <div className="w-[6px] h-[6px] rounded-full bg-sakura shadow-[0_0_6px_var(--color-sakura)]" style={{ animation: 'zen-pulse 2.5s ease-in-out infinite' }}></div>
             <span className="text-[10px] text-gray-400">In flow</span>
           </div>
+          <Link
+            href="/settings/tags"
+            className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-[4px]"
+            title="Settings"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5 1v1.5M5 7.5V9M1 5h1.5M7.5 5H9M2.3 2.3l1.06 1.06M6.64 6.64l1.06 1.06M2.3 7.7l1.06-1.06M6.64 3.36l1.06-1.06" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
+              <circle cx="5" cy="5" r="1.5" stroke="currentColor" strokeWidth="0.8"/>
+            </svg>
+            Settings
+          </Link>
         </div>
       </aside>
 
@@ -273,13 +284,12 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
             </div>
           ) : (
             filteredItems.map((item) => (
-              <div key={item.id} data-testid="item-card">
-                <ItemCard
-                  item={item}
-                  onSelect={setSelectedItem}
-                  isSelected={selectedItem?.id === item.id}
-                />
-              </div>
+              <ItemCard
+                key={item.id}
+                item={item}
+                onSelect={setSelectedItem}
+                isSelected={selectedItem?.id === item.id}
+              />
             ))
           )}
         </div>

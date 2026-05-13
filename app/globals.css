@@ -52,6 +52,25 @@ code, pre {
   font-family: var(--font-mono);
 }
 
+/* Raw textarea — styled to match <pre> mockup */
+.raw-pre {
+  width: 100%;
+  min-height: 400px;
+  padding: 20px 22px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--color-gray-800);
+  background-color: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+}
+.raw-pre:focus {
+  box-shadow: 0 0 0 1px var(--color-gray-300);
+}
+
 /* Variable chip styles used by markdown renderer and Tiptap */
 .variable-chip {
   display: inline-flex;

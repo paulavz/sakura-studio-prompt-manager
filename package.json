@@ -7,7 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:e2e": "pytest tests/test_phase7.py tests/test_phase8.py"
+    "test:e2e": "pytest tests/test_phase7.py tests/test_phase8.py",
+    "test:visual": "playwright test",
+    "test:visual:gallery-cards": "playwright test tests/visual/gallery-cards.spec.ts",
+    "test:visual:sidebar": "playwright test tests/visual/sidebar.spec.ts",
+    "test:visual:tag-chips": "playwright test tests/visual/tag-chips.spec.ts",
+    "test:visual:three-pane-layout": "playwright test tests/visual/three-pane-layout.spec.ts",
+    "test:visual:variable-chips": "playwright test tests/visual/variable-chips.spec.ts",
+    "test:visual:viewer": "playwright test tests/visual/viewer.spec.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",

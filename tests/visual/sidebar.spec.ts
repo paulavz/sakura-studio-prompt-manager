@@ -22,7 +22,7 @@ test.describe('Sidebar Visual and DOM Checks', () => {
 
     const brandingBlock = page.locator(`${REGIONS.sidebar} [data-testid="branding-block"]`);
     await expect(brandingBlock).toBeVisible();
-    await expectColorToken(brandingBlock.locator('[data-testid="branding-text"]'), 'color', MOCKUP_VALUES.sakuraColor);
+    await expectColorToken(brandingBlock.locator('[data-testid="branding-text-title"]'), 'color', MOCKUP_VALUES.sakuraColor);
     await expect(brandingBlock.locator('[data-testid="branding-emoji"]')).toHaveText(MOCKUP_VALUES.brandingEmoji);
 
     // Assuming category items have a consistent padding, e.g., around their links
@@ -35,7 +35,7 @@ test.describe('Sidebar Visual and DOM Checks', () => {
     // It would require iterating through all elements in the sidebar and checking their computed styles,
     // which is better suited for the audit script.
     // For now, we assert that the branding block itself uses the sakura color.
-    const brandingText = page.locator(`${REGIONS.sidebar} [data-testid="branding-text"]`);
+    const brandingText = page.locator(`${REGIONS.sidebar} [data-testid="branding-text-title"]`);
     await expectColorToken(brandingText, 'color', MOCKUP_VALUES.sakuraColor);
   });
 });

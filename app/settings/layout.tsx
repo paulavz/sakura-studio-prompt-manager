@@ -7,10 +7,16 @@ export default function SettingsLayout({
 }) {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-gray-200 px-8 py-4">
+      <header className="border-b border-gray-200 px-8 py-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold tracking-tight text-black">
           Sakura Prompt Studio
         </h1>
+        <Link
+          href="/"
+          className="text-sm text-gray-600 hover:text-black transition-colors"
+        >
+          ← Back to gallery
+        </Link>
       </header>
       <div className="flex">
         <nav className="w-48 border-r border-gray-200 p-4">

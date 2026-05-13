@@ -1,7 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
+import dotenv from "dotenv";
+import path from "path";
+
+// Read from .env.local
+dotenv.config({ path: path.resolve(__dirname, ".env.local") });
 
 export default defineConfig({
   testDir: "tests", // Point to general test directory for E2E
+  globalSetup: require.resolve("./tests/visual/helpers/seed.ts"),
+  globalTeardown: require.resolve("./tests/visual/helpers/teardown.ts"),
   timeout: 60000,
   fullyParallel: false,
   retries: 0,

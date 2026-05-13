@@ -39,3 +39,21 @@ export function applySkill(
     appliedSkills: [...appliedSkills, { id: skillId, name: skillName }],
   };
 }
+
+const SKILL_SCAN_RE = /Usa la skill (.+?) para este desarrollo\./g;
+
+/**
+ * Scan content for injected skill references.
+ * Returns deduplicated skill names in order of first appearance.
+ */
+export function scanSkills(content: string): string[] {
+  const names: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = SKILL_SCAN_RE.exec(content)) !== null) {
+    const name = match[1].trim();
+    if (!names.includes(name)) {
+      names.push(name);
+    }
+  }
+  return names;
+}

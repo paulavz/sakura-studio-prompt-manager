@@ -1,8 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { REGIONS, MOCKUP_VALUES } from './helpers/regions';
 import { disableAnimations, expectColorToken } from './helpers/computed-style';
+import { seed, cleanup } from './helpers/seed';
 
 test.describe('Tag Chips Visual and DOM Checks', () => {
+  test.beforeAll(async () => { await seed(); });
+  test.afterAll(async () => { await cleanup(); });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await disableAnimations(page);
@@ -18,17 +22,15 @@ test.describe('Tag Chips Visual and DOM Checks', () => {
   });
 
   test('DOM: neutral background (NOT sakura), radius and font-size from mockup', async ({ page }) => {
-    const tagChip = page.locator(REGIONS.tagChip).first();
+    // Pick a tag chip from a card WITHOUT variables so the background is neutral
+    const neutralCard = page.locator(`${REGIONS.galleryCard}[data-has-variable="false"]`).first();
+    await neutralCard.waitFor({ state: "visible" });
+    const tagChip = neutralCard.locator(REGIONS.tagChip).first();
 
     // Neutral background (NOT sakura)
     await expectColorToken(tagChip, 'background-color', MOCKUP_VALUES.tagChipNeutralBg);
 
     // Radius and font-size derived from mockup `rx`
-    // Assuming `rx` refers to border-radius in CSS.
-    // The mockup design file shows tag chips with rx="2" for smaller ones, and rx="3" or "4" for others.
-    // This will need to be refined based on the actual implementation.
-    // For now, checking for a common small radius or a list of allowed radii.
-    await expect(tagChip).toHaveCSS('border-radius', '4px'); // Common value, adjust if needed
-    // await expect(tagChip).toHaveCSS('font-size', '12px'); // Example font size, adjust if needed
+    await expect(tagChip).toHaveCSS('border-radius', '4px');
   });
 });

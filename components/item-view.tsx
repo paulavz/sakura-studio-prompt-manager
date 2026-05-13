@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import { VariableChip } from "./tiptap-variable-chip";
 import { Item, ItemCategory, AppliedSkill, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
 import {
   saveItem,
@@ -14,11 +15,14 @@ import {
 import { isValidSlug } from "@/lib/tags";
 import { markdownToHtml, htmlToMarkdown } from "@/lib/markdown";
 import { hasVariables } from "@/lib/variables";
-import { applySkill } from "@/lib/skills";
+import { applySkill, scanSkills } from "@/lib/skills";
 import { extractAgent, applyAgent, removeAgent, normalizeAgentTitle } from "@/lib/agent";
 import { VariableDrawer } from "@/components/variable-drawer";
 import { SkillSelector } from "@/components/skill-selector";
 import { AgentSelector } from "@/components/agent-selector";
+import { SaveBar } from "@/components/save-bar";
+import { PetalRain } from "@/components/petal-rain";
+import { HistoryDrawer } from "@/components/history-drawer";
 
 interface ItemViewProps {
   item: Item;
@@ -69,12 +73,14 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [skillSelectorOpen, setSkillSelectorOpen] = useState(false);
   const [agentSelectorOpen, setAgentSelectorOpen] = useState(false);
+  const [petalTrigger, setPetalTrigger] = useState(0);
   const saveSuccessTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const draftAppliedSkillIds = appliedSkills.map((s) => s.id);
   const committedAgent = extractAgent(committed.content);
   const currentAgentName = extractAgent(editedContent);
+  const committedSkillNames = scanSkills(committed.content);
+  const draftSkillNames = scanSkills(editedContent);
 
   const isContentDirty =
     editedContent !== committed.content ||
@@ -85,10 +91,19 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
     isFavorite !== committed.isFavorite;
 
   const editor = useEditor({
-    extensions: [StarterKit],
+    extensions: [StarterKit, VariableChip],
     content: markdownToHtml(item.content),
     editable: true,
     immediatelyRender: false,
+    editorProps: {
+      handlePaste: (view, event) => {
+        // Paste as plain text by default (Ctrl+Shift+V still works natively)
+        event.preventDefault();
+        const text = event.clipboardData?.getData("text/plain") || "";
+        view.dispatch(view.state.tr.insertText(text));
+        return true;
+      },
+    },
     onUpdate: ({ editor }) => {
       const md = htmlToMarkdown(editor.getHTML());
       setEditedContent(md);
@@ -165,11 +180,11 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           isFavorite,
         });
         setSaveSuccess(true);
+        setPetalTrigger((prev) => prev + 1);
         if (saveSuccessTimeoutRef.current) clearTimeout(saveSuccessTimeoutRef.current);
         saveSuccessTimeoutRef.current = setTimeout(() => setSaveSuccess(false), 2000);
         const newVersions = await getItemVersions(item.id);
         setVersions(newVersions);
-        setShowHistory(true);
         return true;
       } else {
         setSaveError(result.error || errorPrefix);
@@ -200,22 +215,29 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   };
 
   const handleAddTag = async () => {
-    const slug = tagInput.trim().toLowerCase().replace(/\s+/g, "_");
-    if (!slug) return;
+    const raw = tagInput.trim();
+    if (!raw) return;
+
+    const slug = raw.toLowerCase().replace(/\s+/g, "_");
+    if (!isValidSlug(raw)) {
+      setSaveError("Slug must be snake_case (lowercase, digits, underscores).");
+      return;
+    }
 
     if (!tags.includes(slug)) {
-      if (isValidSlug(slug) && !availableTags.includes(slug)) {
+      if (!availableTags.includes(slug)) {
         const result = await createTag(slug);
         if (result.success) {
           setAvailableTags([...availableTags, result.slug!]);
           setTags([...tags, result.slug!]);
         }
-      } else if (availableTags.includes(slug)) {
+      } else {
         setTags([...tags, slug]);
       }
     }
     setTagInput("");
     setShowTagDropdown(false);
+    setSaveError("");
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
@@ -260,7 +282,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   };
 
   return (
-    <div data-region="viewer" className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">
@@ -310,7 +332,11 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
             {tags.map((tag) => (
               <span
                 key={tag}
-                className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600"
+                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
+                  hasVariables(editedContent)
+                    ? "text-variable-text bg-sakura-soft border-sakura/40"
+                    : "text-gray-600 bg-gray-50 border-gray-200"
+                }`}
               >
                 {tag}
                 <button
@@ -396,19 +422,11 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           >
             Raw
           </button>
-          {isContentDirty && (
-            <span className="ml-2 text-xs text-amber-600 self-center">
-              Unsaved changes
-            </span>
-          )}
         </div>
 
         <div className="flex items-center gap-2">
-          {saveSuccess && (
-            <span className="text-xs text-green-600 font-medium">✓ Saved</span>
-          )}
           {saveError && (
-            <span className="text-xs text-red-600 font-medium">{saveError}</span>
+            <span data-testid="error-message" className="text-xs text-red-600 font-medium">{saveError}</span>
           )}
           <button
             onClick={() => setShowHistory(!showHistory)}
@@ -448,101 +466,53 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           >
             {copied ? "✓ Copied" : "Copy raw"}
           </button>
-          {isContentDirty && (
-            <>
-              <button
-                onClick={handleCancel}
-                className="rounded-md border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="rounded-md bg-black px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:opacity-50"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-            </>
-          )}
         </div>
       </div>
 
-      {/* History Panel */}
-      {showHistory && (
-        <div data-testid="version-history" className="border-b border-gray-200 bg-gray-50 p-6">
-          <h3 className="mb-3 text-sm font-medium text-gray-700">Version history</h3>
-          {versions.length === 0 ? (
-            <p className="text-sm text-gray-500">No saved versions.</p>
-          ) : (
-            <div className="space-y-2">
-              {versions.map((v) => (
-                <div
-                  key={v.id}
-                  data-testid="version-entry"
-                  className="flex items-center justify-between rounded-md border border-gray-200 bg-white p-3"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500">
-                      {new Date(v.created_at).toLocaleString()}
-                    </p>
-                    <p className="truncate text-sm text-gray-700 font-mono">
-                      {v.content_snapshot.slice(0, 100)}...
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => handleRestoreVersion(v.content_snapshot, v.applied_skills_snapshot)}
-                    disabled={isSaving}
-                    className="ml-3 shrink-0 rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                  >
-                    Restore
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Applied Skills panel — driven by column, shows SAVED skills only */}
-      {committed.appliedSkills.length > 0 && (
+
+      {/* Applied Skills panel — scanned from saved content */}
+      {committedSkillNames.length > 0 && (
         <div
           data-testid="applied-skills-panel"
-          className="border-b border-gray-200 bg-gray-50 px-8 py-4"
+          className="border-b border-gray-200 bg-gray-50 px-8 py-3 flex items-center gap-2"
         >
-          <h3 className="mb-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
-            Applied Skills
-          </h3>
+          <span className="text-xs text-gray-400">Skills:</span>
           <div className="flex flex-wrap gap-2">
-            {committed.appliedSkills.map((skill) => (
+            {committedSkillNames.map((name) => (
               <span
-                key={skill.id}
-                className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-700"
+                key={name}
+                className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-700"
               >
-                {skill.name}
+                {name}
               </span>
             ))}
           </div>
         </div>
       )}
 
-      {/* Assigned Agent badge — only for categories that support agent assignment */}
+      {/* Assigned Agent badge — chip by @agent */}
       {category !== "agente" && category !== "skill" && (
         <div
           data-testid="assigned-agent-badge"
           className="border-b border-gray-200 bg-gray-50 px-8 py-3 flex items-center gap-2"
         >
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Agent:</span>
           {committedAgent ? (
             currentAgentName ? (
-              <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-700">
-                {committedAgent}
-              </span>
+              <>
+                <span className="text-xs text-gray-400">by</span>
+                <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                  @{committedAgent}
+                </span>
+              </>
             ) : (
-              <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-xs text-gray-400 line-through">
-                {committedAgent}
-                <span className="ml-1 text-gray-300">(removing)</span>
-              </span>
+              <>
+                <span className="text-xs text-gray-400">by</span>
+                <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-400 line-through">
+                  @{committedAgent}
+                  <span className="ml-1 text-gray-300">(removing)</span>
+                </span>
+              </>
             )
           ) : (
             <span className="text-xs text-gray-400">Sin agente asignado</span>
@@ -561,10 +531,13 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
       )}
 
       {/* Content */}
-      <main className="p-8">
+      <main className={`p-8 ${isContentDirty ? "pb-24" : ""}`}>
         {mode === "rendered" ? (
           <div className="prose prose-sm max-w-none text-black">
-            <EditorContent editor={editor} className="min-h-[400px] p-4 border border-gray-200 rounded-lg" />
+            <EditorContent
+              editor={editor}
+              className="min-h-[400px]"
+            />
           </div>
         ) : (
           <textarea
@@ -573,10 +546,19 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
               setEditedContent(e.target.value);
               setSaveError(null);
             }}
-            className="w-full min-h-[400px] p-4 font-mono text-sm text-gray-800 border border-gray-200 rounded-lg resize-y focus:outline-none focus:ring-1 focus:ring-gray-300"
+            className="raw-pre"
           />
         )}
       </main>
+
+      <SaveBar
+        visible={isContentDirty}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        isSaving={isSaving}
+      />
+
+      <PetalRain trigger={petalTrigger} />
 
       <VariableDrawer
         content={committed.content}
@@ -590,7 +572,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         isOpen={skillSelectorOpen}
         onClose={() => setSkillSelectorOpen(false)}
         onSelect={handleAddSkill}
-        appliedSkillIds={draftAppliedSkillIds}
+        appliedSkillNames={draftSkillNames}
       />
 
       <AgentSelector
@@ -598,6 +580,14 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         onClose={() => setAgentSelectorOpen(false)}
         onSelect={handleAssignAgent}
         currentAgentName={currentAgentName}
+      />
+
+      <HistoryDrawer
+        isOpen={showHistory}
+        onClose={() => setShowHistory(false)}
+        versions={versions}
+        onRestore={handleRestoreVersion}
+        isSaving={isSaving}
       />
     </div>
   );

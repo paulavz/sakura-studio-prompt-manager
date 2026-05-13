@@ -8,8 +8,12 @@ import { test, expect } from "@playwright/test";
 import { REGIONS } from "./helpers/regions";
 import { expectFontFamily } from "./helpers/computed-style";
 import { toMatchBaseline } from "./helpers/compare-to-baseline";
+import { seed, cleanup } from './helpers/seed';
 
 test.describe("Viewer panel", () => {
+  test.beforeAll(async () => { await seed(); });
+  test.afterAll(async () => { await cleanup(); });
+
   test.beforeEach(async ({ page }) => {
     // Navigate to a specific item. The app must have at least one item.
     // If no items exist, the test will be skipped.
@@ -75,9 +79,13 @@ test.describe("Viewer panel", () => {
       return;
     }
     await viewer.waitFor({ state: "visible" });
-    const codeBlock = viewer.locator("code, pre").first();
-    if ((await codeBlock.count()) === 0) {
-      test.skip();
+
+    // Wait for a code/pre block to appear (Tiptap may need a moment to mount)
+    const codeBlock = viewer.locator("pre code, pre, code").first();
+    try {
+      await codeBlock.waitFor({ state: "visible", timeout: 5000 });
+    } catch {
+      test.skip("No code block rendered for this item");
       return;
     }
     await expectFontFamily(codeBlock, "JetBrains Mono");

@@ -36,9 +36,16 @@ export async function toMatchBaseline(
   const { maxDiffPixelRatio = 0.02, threshold = 0.2 } = options;
   const baselinePath = path.join(BASELINE_DIR, project, `${baselineName}.png`);
 
+  if (process.env.GENERATE_BASELINES === "1") {
+    fs.mkdirSync(path.dirname(baselinePath), { recursive: true });
+    fs.writeFileSync(baselinePath, screenshot);
+    console.log(`Baseline updated at ${baselinePath}`);
+    return;
+  }
+
   if (!fs.existsSync(baselinePath)) {
     throw new Error(
-      `Baseline not found at ${baselinePath}. Run "npm run test:visual:baseline" first.`
+      `Baseline not found at ${baselinePath}. Run with GENERATE_BASELINES=1 to create it.`
     );
   }
 

@@ -26,6 +26,27 @@ export default function SettingsTagsPage() {
   const [loading, setLoading] = useState(true);
   const tagListRef = useRef<HTMLDivElement>(null);
 
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingValue("");
+  };
+
+  const fetchTags = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getTagsWithUsage();
+      setTags([...data].sort((a, b) => a.slug.localeCompare(b.slug)));
+    } catch {
+      setTags([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
   useEffect(() => {
     if (!editingId) return;
 
@@ -42,27 +63,14 @@ export default function SettingsTagsPage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [editingId]);
 
-  const fetchTags = useCallback(async () => {
-    setLoading(true);
-    const result = await getTagsWithUsage();
-    setTags(result);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
-
   const handleCreate = async () => {
     setError("");
-    if (!input.trim()) return;
-
     const raw = input.trim();
+    if (!raw) return;
     if (!isValidSlug(raw)) {
-      setError("Invalid slug format. Use lowercase letters, numbers, and underscores, starting with a letter.");
+      setError("Slug must be snake_case (lowercase, digits, underscores).");
       return;
     }
-
     const result = await createTag(raw);
     if (!result.success) {
       setError(result.error || "Failed to create tag");
@@ -82,12 +90,6 @@ export default function SettingsTagsPage() {
   const startEditing = (tag: TagEntry) => {
     setEditingId(tag.id);
     setEditingValue(tag.slug);
-    setError("");
-  };
-
-  const cancelEditing = () => {
-    setEditingId(null);
-    setEditingValue("");
   };
 
   const handleRename = async (id: string) => {
