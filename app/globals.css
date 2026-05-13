@@ -22,6 +22,10 @@
   --color-tag-green: #F0F8E8;
   --color-tag-orange: #FFF3E8;
   --color-tag-pink: #FFF0F5;
+
+  --color-agent-pill-bg: #F0F8E8;
+  --color-agent-pill-border: #9DC9A0;
+  --color-agent-pill-text: #2F5132;
   --color-variable-text: #C45E78;
 
   --color-sakura-6: rgba(255, 183, 197, 0.06);

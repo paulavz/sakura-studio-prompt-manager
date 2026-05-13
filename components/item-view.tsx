@@ -23,6 +23,7 @@ import { AgentSelector } from "@/components/agent-selector";
 import { SaveBar } from "@/components/save-bar";
 import { PetalRain } from "@/components/petal-rain";
 import { HistoryDrawer } from "@/components/history-drawer";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 interface ItemViewProps {
   item: Item;
@@ -73,6 +74,8 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   const [skillSelectorOpen, setSkillSelectorOpen] = useState(false);
   const [agentSelectorOpen, setAgentSelectorOpen] = useState(false);
   const [petalTrigger, setPetalTrigger] = useState(0);
+  const [agentConfirmOpen, setAgentConfirmOpen] = useState(false);
+  const [pendingAgentTitle, setPendingAgentTitle] = useState<string | null>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const committedAgent = extractAgent(committed.content);
@@ -266,8 +269,27 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
 
   const handleAssignAgent = ({ title }: { title: string }) => {
     if (currentAgentName && normalizeAgentTitle(currentAgentName) === normalizeAgentTitle(title)) return;
+    if (currentAgentName) {
+      setPendingAgentTitle(title);
+      setAgentConfirmOpen(true);
+      return;
+    }
     setMarkdown(applyAgent(editedContent, title));
     setSaveError(null);
+  };
+
+  const handleConfirmAgentReplace = () => {
+    if (pendingAgentTitle) {
+      setMarkdown(applyAgent(editedContent, pendingAgentTitle));
+      setSaveError(null);
+    }
+    setPendingAgentTitle(null);
+    setAgentConfirmOpen(false);
+  };
+
+  const handleCancelAgentReplace = () => {
+    setPendingAgentTitle(null);
+    setAgentConfirmOpen(false);
   };
 
   const handleUnassignAgent = () => {
@@ -302,6 +324,28 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
               }}
               className="text-lg font-semibold tracking-tight text-black bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-gray-300 rounded px-1 -ml-1 flex-1"
             />
+            {committedAgent && category !== "agente" && category !== "skill" && (
+              <div data-testid="assigned-agent-badge" className="flex items-center gap-1.5 shrink-0">
+                <span className="text-[11px] text-gray-500">by</span>
+                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium truncate max-w-[180px]"
+                  style={{
+                    backgroundColor: 'var(--color-agent-pill-bg)',
+                    borderColor: 'var(--color-agent-pill-border)',
+                    color: 'var(--color-agent-pill-text)',
+                  }}
+                >
+                  @{committedAgent}
+                </span>
+                <button
+                  data-testid="unassign-agent-btn"
+                  aria-label="Remove agent"
+                  onClick={handleUnassignAgent}
+                  className="text-[10px] text-gray-400 hover:text-gray-700 transition-colors leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )}
           </div>
           <div className="w-20" />
         </div>
@@ -441,9 +485,23 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
             <button
               id="assign-agent-btn"
               onClick={() => setAgentSelectorOpen(true)}
-              className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
+              className="rounded-md border px-4 py-1.5 text-sm font-medium transition-colors"
+              style={{
+                borderColor: 'var(--color-agent-pill-border)',
+                color: 'var(--color-agent-pill-text)',
+                backgroundColor: 'transparent',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-agent-pill-bg)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+              }}
             >
-              Assign Agent
+              <span className="flex items-center gap-1.5">
+                <span className="text-xs">⌥</span>
+                Assign Agent
+              </span>
             </button>
           )}
           {hasVariables(committed.content) && (
@@ -485,44 +543,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         </div>
       )}
 
-      {/* Assigned Agent badge — chip by @agent */}
-      {category !== "agente" && category !== "skill" && (
-        <div
-          data-testid="assigned-agent-badge"
-          className="border-b border-gray-200 bg-gray-50 px-8 py-3 flex items-center gap-2"
-        >
-          {committedAgent ? (
-            currentAgentName ? (
-              <>
-                <span className="text-xs text-gray-400">by</span>
-                <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                  @{committedAgent}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-xs text-gray-400">by</span>
-                <span className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-400 line-through">
-                  @{committedAgent}
-                  <span className="ml-1 text-gray-300">(removing)</span>
-                </span>
-              </>
-            )
-          ) : (
-            <span className="text-xs text-gray-400">Sin agente asignado</span>
-          )}
-          {committedAgent && (
-            <button
-              data-testid="unassign-agent-btn"
-              aria-label="Remove agent"
-              onClick={handleUnassignAgent}
-              className="ml-1 text-xs text-gray-400 hover:text-gray-700 transition-colors"
-            >
-              × Remove
-            </button>
-          )}
-        </div>
-      )}
+
 
       {/* Content */}
       <main className={`p-8 ${isContentDirty ? "pb-24" : ""}`}>
@@ -582,6 +603,23 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         versions={versions}
         onRestore={handleRestoreVersion}
         isSaving={isSaving}
+      />
+
+      <ConfirmDialog
+        isOpen={agentConfirmOpen}
+        title="Replace Agent"
+        message={
+          <>
+            This will replace <span className="font-medium text-gray-900">«{currentAgentName}»</span> with{" "}
+            <span className="font-medium text-gray-900">«{pendingAgentTitle}»</span>.
+            <br />
+            Continue?
+          </>
+        }
+        confirmLabel="Replace"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmAgentReplace}
+        onCancel={handleCancelAgentReplace}
       />
     </div>
   );
