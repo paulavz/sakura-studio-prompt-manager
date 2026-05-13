@@ -13,44 +13,26 @@ export async function saveItemComplete(
 ): Promise<{ success: boolean; content?: string; error?: string }> {
   const admin = createAdminClient();
 
-  // Update item with all fields atomically
-  const { error: updateError } = await admin
-    .from("items")
-    .update({
-      title,
-      content,
-      category,
-      tags,
-      applied_skills: appliedSkills,
-      is_favorite: isFavorite,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", itemId)
-    .eq("owner", ownerId);
+  const { data, error } = await admin.rpc("save_item_with_version", {
+    p_item_id: itemId,
+    p_owner: ownerId,
+    p_title: title,
+    p_content: content,
+    p_category: category,
+    p_tags: tags,
+    p_applied_skills: appliedSkills,
+    p_is_favorite: isFavorite,
+  });
 
-  if (updateError) {
-    return { success: false, error: updateError.message };
+  if (error) {
+    return { success: false, error: error.message };
   }
 
-  // Insert version snapshot (full item state)
-  const { error: insertError } = await admin
-    .from("versions")
-    .insert({
-      item_id: itemId,
-      content_snapshot: content,
-      applied_skills_snapshot: appliedSkills,
-    });
+  const result = data as { success: boolean; content: string; error?: string } | null;
 
-  if (insertError) {
-    return { success: false, error: insertError.message };
+  if (!result || !result.success) {
+    return { success: false, error: result?.error || "Unknown save error" };
   }
 
-  // Rotate old versions silently
-  try {
-    await admin.rpc("rotate_versions", { p_item_id: itemId });
-  } catch (e) {
-    console.warn("Version rotation failed:", e);
-  }
-
-  return { success: true, content };
+  return { success: true, content: result.content };
 }
