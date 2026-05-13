@@ -166,4 +166,36 @@ test.describe("Viewer history drawer + agent chip + skills scan (Fase 13–15)",
     // primarily validates the prop wiring.)
     await skillSelector.locator('button[aria-label="Close"]').click();
   });
+
+  // ─── E15.3: Remove skill via × button ────────────────────────────────────
+
+  test("E15.3: clicking × on skill chip removes it and marks dirty", async ({ page }) => {
+    // Inject a skill line into raw content
+    const rawBtn = page.locator('[data-testid="mode-toggle"] button:has-text("Raw")');
+    await rawBtn.click();
+
+    const textarea = page.locator('textarea.raw-pre');
+    await textarea.fill("Some content.\n\nUsa la skill Removable Skill para este desarrollo.");
+    await page.getByRole("button", { name: /^Save$/i }).click();
+    await page.waitForTimeout(800);
+
+    // Strip should show the skill
+    const strip = page.locator('[data-testid="applied-skills-panel"]');
+    await expect(strip).toBeVisible();
+    await expect(strip).toContainText("Removable Skill");
+
+    // Click the × button on the skill chip
+    const removeBtn = strip.locator('button[aria-label*="Remove skill Removable Skill"]');
+    await removeBtn.click();
+
+    // Save bar should appear (dirty state)
+    await expect(page.locator('[data-testid="save-bar"]')).toBeVisible();
+
+    // Strip should no longer be visible (no skills left)
+    await expect(strip).not.toBeVisible();
+
+    // Raw content should no longer have the skill line
+    const rawText = await textarea.inputValue();
+    expect(rawText).not.toContain("Usa la skill Removable Skill para este desarrollo.");
+  });
 });

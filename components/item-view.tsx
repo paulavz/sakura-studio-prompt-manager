@@ -15,7 +15,7 @@ import {
 import { isValidSlug } from "@/lib/tags";
 import { markdownToHtml, htmlToMarkdown } from "@/lib/markdown";
 import { hasVariables } from "@/lib/variables";
-import { applySkill, scanSkills } from "@/lib/skills";
+import { applySkill, scanSkills, removeSkillFromContent } from "@/lib/skills";
 import { extractAgent, applyAgent, removeAgent, normalizeAgentTitle } from "@/lib/agent";
 import { VariableDrawer } from "@/components/variable-drawer";
 import { SkillSelector } from "@/components/skill-selector";
@@ -80,7 +80,6 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
 
   const committedAgent = extractAgent(committed.content);
   const currentAgentName = extractAgent(editedContent);
-  const committedSkillNames = scanSkills(committed.content);
   const draftSkillNames = scanSkills(editedContent);
 
   const isContentDirty =
@@ -264,6 +263,13 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
     if (result === null) return;
     setAppliedSkills(result.appliedSkills);
     setMarkdown(result.content);
+    setSaveError(null);
+  };
+
+  const handleRemoveSkill = (skillName: string) => {
+    const newContent = removeSkillFromContent(editedContent, skillName);
+    setAppliedSkills((prev) => prev.filter((s) => s.name !== skillName));
+    setMarkdown(newContent);
     setSaveError(null);
   };
 
@@ -523,23 +529,33 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
 
 
 
-      {/* Applied Skills panel — scanned from saved content */}
-      {committedSkillNames.length > 0 && (
+      {/* Skills strip — inline below toolbar, sakura styled */}
+      {draftSkillNames.length > 0 && (
         <div
           data-testid="applied-skills-panel"
-          className="border-b border-gray-200 bg-gray-50 px-8 py-3 flex items-center gap-2"
+          className="flex items-center gap-2 overflow-x-auto px-8 py-2"
         >
-          <span className="text-xs text-gray-400">Skills:</span>
-          <div className="flex flex-wrap gap-2">
-            {committedSkillNames.map((name) => (
-              <span
-                key={name}
-                className="inline-flex items-center rounded-full border border-gray-200 bg-white px-2.5 py-0.5 text-xs text-gray-700"
+          {draftSkillNames.map((name) => (
+            <span
+              key={name}
+              className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium shrink-0"
+              style={{
+                backgroundColor: "var(--color-sakura-soft)",
+                borderColor: "rgba(255, 183, 197, 0.4)",
+                color: "var(--color-variable-text)",
+              }}
+            >
+              <span>✦</span>
+              {name}
+              <button
+                onClick={() => handleRemoveSkill(name)}
+                className="ml-0.5 text-[10px] opacity-60 hover:opacity-100 transition-opacity"
+                aria-label={`Remove skill ${name}`}
               >
-                {name}
-              </span>
-            ))}
-          </div>
+                ×
+              </button>
+            </span>
+          ))}
         </div>
       )}
 

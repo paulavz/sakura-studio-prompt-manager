@@ -42,6 +42,10 @@ export function applySkill(
 
 const SKILL_SCAN_RE = /Usa la skill (.+?) para este desarrollo\./g;
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
  * Scan content for injected skill references.
  * Returns deduplicated skill names in order of first appearance.
@@ -56,4 +60,14 @@ export function scanSkills(content: string): string[] {
     }
   }
   return names;
+}
+
+/**
+ * Remove a skill injection line from content.
+ * Anchors to the exact template format to avoid false positives.
+ */
+export function removeSkillFromContent(content: string, skillName: string): string {
+  const pattern = `\n\nUsa la skill ${escapeRegex(skillName)} para este desarrollo.`;
+  const re = new RegExp(pattern, "g");
+  return content.replace(re, "").trimEnd();
 }
