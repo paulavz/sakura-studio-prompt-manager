@@ -1,22 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import { VariableChip } from "./tiptap-variable-chip";
 import { Item, ItemCategory, AppliedSkill, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
-import {
-  saveItem,
-  getTags,
-  createTag,
-  getItemVersions,
-} from "@/app/actions";
-import { isValidSlug } from "@/lib/tags";
-import { markdownToHtml, htmlToMarkdown } from "@/lib/markdown";
+import { useItemState } from "@/hooks/use-item-state";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { hasVariables } from "@/lib/variables";
-import { applySkill, scanSkills, removeSkillFromContent } from "@/lib/skills";
-import { extractAgent, applyAgent, removeAgent, normalizeAgentTitle } from "@/lib/agent";
+import { ItemEditor } from "@/components/item-editor";
+import { EditorErrorBoundary } from "@/components/editor-error-boundary";
 import { VariableDrawer } from "@/components/variable-drawer";
 import { SkillSelector } from "@/components/skill-selector";
 import { AgentSelector } from "@/components/agent-selector";
@@ -32,13 +23,6 @@ interface ItemViewProps {
   embedded?: boolean;
 }
 
-interface Version {
-  id: string;
-  content_snapshot: string;
-  applied_skills_snapshot: AppliedSkill[];
-  created_at: string;
-}
-
 function asItemCategory(value: string): ItemCategory {
   if (CATEGORIES.includes(value as ItemCategory)) return value as ItemCategory;
   return "template";
@@ -46,27 +30,7 @@ function asItemCategory(value: string): ItemCategory {
 
 export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded = false }: ItemViewProps) {
   const [mode, setMode] = useState<"rendered" | "raw">("rendered");
-
-  const [committed, setCommitted] = useState({
-    content: item.content,
-    title: item.title,
-    category: item.category,
-    tags: item.tags,
-    appliedSkills: item.applied_skills,
-    isFavorite: item.is_favorite,
-  });
-
-  const [editedContent, setEditedContent] = useState(item.content);
-  const [title, setTitle] = useState(item.title);
-  const [category, setCategory] = useState<ItemCategory>(item.category);
-  const [tags, setTags] = useState<string[]>(item.tags);
-  const [isFavorite, setIsFavorite] = useState(item.is_favorite);
-  const [appliedSkills, setAppliedSkills] = useState<AppliedSkill[]>(item.applied_skills);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [versions, setVersions] = useState<Version[]>([]);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [showTagDropdown, setShowTagDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -77,54 +41,41 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   const [agentConfirmOpen, setAgentConfirmOpen] = useState(false);
   const [pendingAgentTitle, setPendingAgentTitle] = useState<string | null>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tagDropdownRef = useRef<HTMLDivElement>(null);
 
-  const committedAgent = extractAgent(committed.content);
-  const currentAgentName = extractAgent(editedContent);
-  const draftSkillNames = scanSkills(editedContent);
+  useClickOutside(tagDropdownRef, () => setShowTagDropdown(false), showTagDropdown);
 
-  const isContentDirty =
-    editedContent !== committed.content ||
-    title !== committed.title ||
-    category !== committed.category ||
-    JSON.stringify(tags) !== JSON.stringify(committed.tags) ||
-    JSON.stringify(appliedSkills) !== JSON.stringify(committed.appliedSkills) ||
-    isFavorite !== committed.isFavorite;
-
-  const editor = useEditor({
-    extensions: [StarterKit, VariableChip],
-    content: markdownToHtml(item.content),
-    editable: true,
-    immediatelyRender: false,
-    editorProps: {
-      handlePaste: (view, event) => {
-        // Paste as plain text by default (Ctrl+Shift+V still works natively)
-        event.preventDefault();
-        const text = event.clipboardData?.getData("text/plain") || "";
-        view.dispatch(view.state.tr.insertText(text));
-        return true;
-      },
-    },
-    onUpdate: ({ editor }) => {
-      const md = htmlToMarkdown(editor.getHTML());
-      setEditedContent(md);
-      setSaveError(null);
-    },
-  });
-
-  const setMarkdown = useCallback(
-    (md: string) => {
-      setEditedContent(md);
-      if (editor) {
-        editor.commands.setContent(markdownToHtml(md), { emitUpdate: false });
-      }
-    },
-    [editor]
-  );
-
-  useEffect(() => {
-    getTags().then(setAvailableTags);
-    getItemVersions(item.id).then(setVersions);
-  }, [item.id]);
+  const {
+    editedContent,
+    title,
+    category,
+    tags,
+    isFavorite,
+    isContentDirty,
+    committedAgent,
+    currentAgentName,
+    draftSkillNames,
+    isSaving,
+    saveError,
+    versions,
+    availableTags,
+    setTitle,
+    setCategory,
+    setTags,
+    setEditedContent,
+    setSaveError,
+    handleSave,
+    handleCancel,
+    handleToggleFavorite,
+    handleAddTag,
+    handleRemoveTag,
+    handleRestoreVersion,
+    handleAddSkill,
+    handleRemoveSkill,
+    handleAssignAgent,
+    handleConfirmAgentReplace,
+    handleUnassignAgent,
+  } = useItemState(item);
 
   useEffect(() => {
     const handler = (e: BeforeUnloadEvent) => {
@@ -138,113 +89,44 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   }, [isContentDirty]);
 
   const handleModeChange = (newMode: "rendered" | "raw") => {
-    if (isContentDirty) {
-      return;
-    }
-
-    if (newMode === "rendered" && editor) {
-      // Suppress update event to avoid dirty state on mode switch
-      editor.commands.setContent(markdownToHtml(editedContent), { emitUpdate: false });
-    }
-
+    if (isContentDirty) return;
     setMode(newMode);
   };
 
-  const commitSave = async (
-    contentToSave: string,
-    appliedSkillsToSave: AppliedSkill[],
-    errorPrefix: string
-  ) => {
-    setIsSaving(true);
-    setSaveError(null);
-
-    try {
-      const result = await saveItem(
-        item.id,
-        contentToSave,
-        title,
-        category,
-        tags,
-        appliedSkillsToSave,
-        isFavorite
-      );
-
-      if (result.success) {
-        setCommitted({
-          content: result.content || contentToSave,
-          title,
-          category,
-          tags: [...tags],
-          appliedSkills: [...appliedSkillsToSave],
-          isFavorite,
-        });
-        setPetalTrigger((prev) => prev + 1);
-        const newVersions = await getItemVersions(item.id);
-        setVersions(newVersions);
-        return true;
-      } else {
-        setSaveError(result.error || errorPrefix);
-        return false;
-      }
-    } finally {
-      setIsSaving(false);
-    }
+  const onSave = async () => {
+    const ok = await handleSave();
+    if (ok) setPetalTrigger((p) => p + 1);
   };
 
-  const handleSave = async () => {
-    await commitSave(editedContent, appliedSkills, "Error saving");
+  const onRestore = async (snapshot: string, snapshotSkills: AppliedSkill[]) => {
+    const ok = await handleRestoreVersion(snapshot, snapshotSkills);
+    if (ok) setShowHistory(false);
   };
 
-  const handleCancel = () => {
-    setTitle(committed.title);
-    setCategory(committed.category);
-    setTags([...committed.tags]);
-    setAppliedSkills([...committed.appliedSkills]);
-    setIsFavorite(committed.isFavorite);
-    setMarkdown(committed.content);
-    setSaveError(null);
-  };
-
-  const handleToggleFavorite = () => {
-    setIsFavorite((prev) => !prev);
-    setSaveError(null);
-  };
-
-  const handleAddTag = async () => {
+  const onAddTag = async () => {
     const raw = tagInput.trim();
     if (!raw) return;
-
-    const slug = raw.toLowerCase().replace(/\s+/g, "_");
-    if (!isValidSlug(raw)) {
-      setSaveError("Slug must be snake_case (lowercase, digits, underscores).");
-      return;
-    }
-
-    if (!tags.includes(slug)) {
-      if (!availableTags.includes(slug)) {
-        const result = await createTag(slug);
-        if (result.success) {
-          setAvailableTags([...availableTags, result.slug!]);
-          setTags([...tags, result.slug!]);
-        }
-      } else {
-        setTags([...tags, slug]);
-      }
-    }
+    await handleAddTag(raw);
     setTagInput("");
     setShowTagDropdown(false);
-    setSaveError("");
   };
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((t) => t !== tagToRemove));
+  const onAssignAgent = (agent: { title: string }) => {
+    handleAssignAgent(agent, (title) => {
+      setPendingAgentTitle(title);
+      setAgentConfirmOpen(true);
+    });
   };
 
-  const handleRestoreVersion = async (snapshot: string, snapshotAppliedSkills: AppliedSkill[]) => {
-    setAppliedSkills(snapshotAppliedSkills);
-    setMarkdown(snapshot);
-    await commitSave(snapshot, snapshotAppliedSkills, "Error restoring");
-    setShowHistory(false);
+  const onConfirmAgentReplace = () => {
+    if (pendingAgentTitle) handleConfirmAgentReplace(pendingAgentTitle);
+    setPendingAgentTitle(null);
+    setAgentConfirmOpen(false);
+  };
+
+  const onCancelAgentReplace = () => {
+    setPendingAgentTitle(null);
+    setAgentConfirmOpen(false);
   };
 
   const handleCopy = async () => {
@@ -254,53 +136,8 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
       if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
       copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fail silently in toolbar copy; drawer has its own error state
+      // Fail silently
     }
-  };
-
-  const handleAddSkill = (skill: { id: string; title: string }) => {
-    const result = applySkill(editedContent, appliedSkills, skill.id, skill.title);
-    if (result === null) return;
-    setAppliedSkills(result.appliedSkills);
-    setMarkdown(result.content);
-    setSaveError(null);
-  };
-
-  const handleRemoveSkill = (skillName: string) => {
-    const newContent = removeSkillFromContent(editedContent, skillName);
-    setAppliedSkills((prev) => prev.filter((s) => s.name !== skillName));
-    setMarkdown(newContent);
-    setSaveError(null);
-  };
-
-  const handleAssignAgent = ({ title }: { title: string }) => {
-    if (currentAgentName && normalizeAgentTitle(currentAgentName) === normalizeAgentTitle(title)) return;
-    if (currentAgentName) {
-      setPendingAgentTitle(title);
-      setAgentConfirmOpen(true);
-      return;
-    }
-    setMarkdown(applyAgent(editedContent, title));
-    setSaveError(null);
-  };
-
-  const handleConfirmAgentReplace = () => {
-    if (pendingAgentTitle) {
-      setMarkdown(applyAgent(editedContent, pendingAgentTitle));
-      setSaveError(null);
-    }
-    setPendingAgentTitle(null);
-    setAgentConfirmOpen(false);
-  };
-
-  const handleCancelAgentReplace = () => {
-    setPendingAgentTitle(null);
-    setAgentConfirmOpen(false);
-  };
-
-  const handleUnassignAgent = () => {
-    setMarkdown(removeAgent(editedContent));
-    setSaveError(null);
   };
 
   return (
@@ -324,20 +161,18 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
             <input
               type="text"
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                setSaveError(null);
-              }}
+              onChange={(e) => setTitle(e.target.value)}
               className="text-lg font-semibold tracking-tight text-black bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-gray-300 rounded px-1 -ml-1 flex-1"
             />
             {committedAgent && category !== "agente" && category !== "skill" && (
               <div data-testid="assigned-agent-badge" className="flex items-center gap-1.5 shrink-0">
                 <span className="text-[11px] text-gray-500">by</span>
-                <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium truncate max-w-[180px]"
+                <span
+                  className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium truncate max-w-[180px]"
                   style={{
-                    backgroundColor: 'var(--color-agent-pill-bg)',
-                    borderColor: 'var(--color-agent-pill-border)',
-                    color: 'var(--color-agent-pill-text)',
+                    backgroundColor: "var(--color-agent-pill-bg)",
+                    borderColor: "var(--color-agent-pill-border)",
+                    color: "var(--color-agent-pill-text)",
                   }}
                 >
                   @{committedAgent}
@@ -359,10 +194,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <select
             value={category}
-            onChange={(e) => {
-              setCategory(asItemCategory(e.target.value));
-              setSaveError(null);
-            }}
+            onChange={(e) => setCategory(asItemCategory(e.target.value))}
             className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 border-none cursor-pointer"
           >
             {CATEGORIES.map((cat) => (
@@ -391,7 +223,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
                 </button>
               </span>
             ))}
-            <div className="relative">
+            <div ref={tagDropdownRef} className="relative">
               <input
                 type="text"
                 value={tagInput}
@@ -403,10 +235,9 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
-                    handleAddTag();
+                    onAddTag();
                   }
                 }}
-                onBlur={() => setTimeout(() => setShowTagDropdown(false), 200)}
                 placeholder="+ tag"
                 className="w-20 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-600 placeholder-gray-400"
               />
@@ -418,10 +249,11 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
                     .map((tag) => (
                       <button
                         key={tag}
-                        onClick={() => {
-                          if (!tags.includes(tag)) {
-                            setTags([...tags, tag]);
-                          }
+                        onMouseDown={(e) => {
+                          // mousedown fires before blur — prevents dropdown from closing
+                          // before the click registers
+                          e.preventDefault();
+                          if (!tags.includes(tag)) setTags([...tags, tag]);
                           setTagInput("");
                           setShowTagDropdown(false);
                         }}
@@ -470,9 +302,12 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
 
         <div className="flex items-center gap-2">
           {saveError && (
-            <span data-testid="error-message" className="text-xs text-red-600 font-medium">{saveError}</span>
+            <span data-testid="error-message" className="text-xs text-red-600 font-medium">
+              {saveError}
+            </span>
           )}
           <button
+            aria-label="Open version history"
             onClick={() => setShowHistory(!showHistory)}
             className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
           >
@@ -493,15 +328,15 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
               onClick={() => setAgentSelectorOpen(true)}
               className="rounded-md border px-4 py-1.5 text-sm font-medium transition-colors"
               style={{
-                borderColor: 'var(--color-agent-pill-border)',
-                color: 'var(--color-agent-pill-text)',
-                backgroundColor: 'transparent',
+                borderColor: "var(--color-agent-pill-border)",
+                color: "var(--color-agent-pill-text)",
+                backgroundColor: "transparent",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--color-agent-pill-bg)';
+                (e.currentTarget as HTMLElement).style.backgroundColor = "var(--color-agent-pill-bg)";
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
               }}
             >
               <span className="flex items-center gap-1.5">
@@ -510,7 +345,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
               </span>
             </button>
           )}
-          {hasVariables(committed.content) && (
+          {hasVariables(editedContent) && (
             <button
               onClick={() => setDrawerOpen(true)}
               className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
@@ -527,9 +362,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         </div>
       </div>
 
-
-
-      {/* Skills strip — inline below toolbar, sakura styled */}
+      {/* Skills strip */}
       {draftSkillNames.length > 0 && (
         <div
           data-testid="applied-skills-panel"
@@ -559,40 +392,24 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         </div>
       )}
 
-
-
       {/* Content */}
       <main className={`p-8 ${isContentDirty ? "pb-24" : ""}`}>
-        {mode === "rendered" ? (
-          <div className="prose prose-sm max-w-none text-black">
-            <EditorContent
-              editor={editor}
-              className="min-h-[400px]"
-            />
-          </div>
-        ) : (
-          <textarea
+        <EditorErrorBoundary>
+          <ItemEditor
+            mode={mode}
             value={editedContent}
-            onChange={(e) => {
-              setEditedContent(e.target.value);
-              setSaveError(null);
-            }}
-            className="raw-pre"
+            onChange={setEditedContent}
+            onClearError={() => setSaveError(null)}
           />
-        )}
+        </EditorErrorBoundary>
       </main>
 
-      <SaveBar
-        visible={isContentDirty}
-        onSave={handleSave}
-        onCancel={handleCancel}
-        isSaving={isSaving}
-      />
+      <SaveBar visible={isContentDirty} onSave={onSave} onCancel={handleCancel} isSaving={isSaving} />
 
       <PetalRain trigger={petalTrigger} />
 
       <VariableDrawer
-        content={committed.content}
+        content={editedContent}
         isOpen={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         minVarLength={minVarLength}
@@ -609,7 +426,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
       <AgentSelector
         isOpen={agentSelectorOpen}
         onClose={() => setAgentSelectorOpen(false)}
-        onSelect={handleAssignAgent}
+        onSelect={onAssignAgent}
         currentAgentName={currentAgentName}
       />
 
@@ -617,7 +434,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         isOpen={showHistory}
         onClose={() => setShowHistory(false)}
         versions={versions}
-        onRestore={handleRestoreVersion}
+        onRestore={onRestore}
         isSaving={isSaving}
       />
 
@@ -634,8 +451,8 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         }
         confirmLabel="Replace"
         cancelLabel="Cancel"
-        onConfirm={handleConfirmAgentReplace}
-        onCancel={handleCancelAgentReplace}
+        onConfirm={onConfirmAgentReplace}
+        onCancel={onCancelAgentReplace}
       />
     </div>
   );

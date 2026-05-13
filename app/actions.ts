@@ -63,6 +63,8 @@ export async function createItemAction(
   redirect(`/items/${data.id}`);
 }
 
+// TODO(skill-unify): appliedSkills param disappears when skills are derived from content.
+// See PLAN-FIXES-V2.md § Fase 5 and lib/skills.ts TODO(skill-unify).
 export async function saveItem(
   id: string,
   content: string,

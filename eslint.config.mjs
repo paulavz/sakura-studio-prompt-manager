@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Test artifacts
+    "test-results/**",
+    "playwright-report/**",
     // Mockup sources are reference-only, not app code
     "phases/**",
   ]),

@@ -1,3 +1,8 @@
+// TODO(skill-unify): applied_skills column and the prose line in content are two sources
+// of truth that can drift on manual raw edits. Next iteration: pick one — recommended
+// option A: drop the column and derive applied skills from content scan (like agents).
+// See PLAN-FIXES.md § Fase 3 and PLAN-FIXES-V2.md § Fase 5.
+
 /**
  * lib/skills.ts — Phase 6
  *
@@ -52,8 +57,9 @@ function escapeRegex(str: string): string {
  */
 export function scanSkills(content: string): string[] {
   const names: string[] = [];
+  const re = new RegExp(SKILL_SCAN_RE.source, SKILL_SCAN_RE.flags);
   let match: RegExpExecArray | null;
-  while ((match = SKILL_SCAN_RE.exec(content)) !== null) {
+  while ((match = re.exec(content)) !== null) {
     const name = match[1].trim();
     if (!names.includes(name)) {
       names.push(name);

@@ -146,7 +146,7 @@ export function HistoryDrawer({
                         disabled={isSaving}
                         className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
                       >
-                        Restore
+                        Restore content
                       </button>
                     </div>
                   ))}

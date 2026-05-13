@@ -232,3 +232,4 @@ Las siguientes decisiones se tomaron por defecto y deben confirmarse antes/duran
 2. Detección de agente asignado vía scan literal de `Actúa como el agente «X» para este desarrollo.` al inicio del `content` (separador `«»` elegido por ser invisible para Turndown; ver §2-bis).
 3. Tiptap como editor WYSIWYG del modo rendered.
 4. Tabla separada `tags` en Postgres (vs. derivar de `items.tags jsonb`).
+5. **Fuente de verdad para skills aplicadas (deuda pendiente):** hoy las skills viven en dos sitios — columna `applied_skills` (truth para el panel UI) y prosa `"Usa la skill X para este desarrollo."` en `content` (truth para el LLM). Ediciones manuales en modo raw pueden desincronizarlas. Próxima iteración: unificar — opción recomendada A: eliminar la columna y derivar de `content` via scan (mismo modelo que los agents). Ver `PLAN-FIXES.md § Fase 3`.
