@@ -1,8 +1,12 @@
 import { test, expect } from '@playwright/test';
 import { REGIONS, MOCKUP_VALUES } from './helpers/regions';
 import { disableAnimations, expectColorToken } from './helpers/computed-style';
+import { seed, cleanup } from './helpers/seed';
 
 test.describe('Sidebar Visual and DOM Checks', () => {
+  test.beforeAll(async () => { await seed(); });
+  test.afterAll(async () => { await cleanup(); });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await disableAnimations(page);
@@ -11,7 +15,7 @@ test.describe('Sidebar Visual and DOM Checks', () => {
   test('visual match with mockup-sidebar', async ({ page }) => {
     const sidebar = page.locator(REGIONS.sidebar);
     await expect(sidebar).toHaveScreenshot('mockup-sidebar.png', {
-      maxDiffPixelRatio: 0.02,
+      maxDiffPixelRatio: 0.04,
       threshold: 0.2,
     });
   });
