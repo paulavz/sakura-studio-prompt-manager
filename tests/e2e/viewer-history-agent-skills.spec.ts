@@ -110,7 +110,7 @@ test.describe("Viewer history drawer + agent chip + skills scan (Fase 13–15)",
 
   // ─── E14.2: Unassigned agent shows subtle text ───────────────────────────
 
-  test("E14.2: no agent shows Sin agente asignado", async ({ page }) => {
+  test("E14.2: no agent hides the badge entirely", async ({ page }) => {
     // If an agent was assigned by a prior test, remove it first
     const removeBtn = page.locator('[data-testid="unassign-agent-btn"]');
     if (await removeBtn.isVisible().catch(() => false)) {
@@ -120,7 +120,7 @@ test.describe("Viewer history drawer + agent chip + skills scan (Fase 13–15)",
     }
 
     const badge = page.locator('[data-testid="assigned-agent-badge"]');
-    await expect(badge).toContainText("Sin agente asignado");
+    await expect(badge).not.toBeVisible();
   });
 
   // ─── E15.1: Applied skills scanned from saved content ────────────────────
