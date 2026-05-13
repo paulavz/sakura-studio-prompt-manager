@@ -224,6 +224,16 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
               ))}
             </ul>
           </div>
+
+          <div className="mt-2">
+            <Link
+              href="/settings/tags"
+              className="flex items-center gap-[8px] rounded-[var(--radius-sm)] px-[12px] py-[6px] text-[13px] text-gray-600 hover:bg-gray-50 hover:text-black transition-colors"
+            >
+              <span className="text-[13px] opacity-70">⚙</span>
+              <span>Settings</span>
+            </Link>
+          </div>
         </nav>
 
         {/* Footer */}
@@ -233,17 +243,6 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
             <div className="w-[6px] h-[6px] rounded-full bg-sakura shadow-[0_0_6px_var(--color-sakura)]" style={{ animation: 'zen-pulse 2.5s ease-in-out infinite' }}></div>
             <span className="text-[10px] text-gray-400">In flow</span>
           </div>
-          <Link
-            href="/settings/tags"
-            className="text-[10px] text-gray-400 hover:text-gray-600 transition-colors flex items-center gap-[4px]"
-            title="Settings"
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5 1v1.5M5 7.5V9M1 5h1.5M7.5 5H9M2.3 2.3l1.06 1.06M6.64 6.64l1.06 1.06M2.3 7.7l1.06-1.06M6.64 3.36l1.06-1.06" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
-              <circle cx="5" cy="5" r="1.5" stroke="currentColor" strokeWidth="0.8"/>
-            </svg>
-            Settings
-          </Link>
         </div>
       </aside>
 
