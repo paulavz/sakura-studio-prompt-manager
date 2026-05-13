@@ -64,6 +64,20 @@
 
 Cada plan de implementación está diseñado para arrancar **con tokens y decisiones de comportamiento ya definidas en `fase-9.1/CLAUDE_DESIGN_PROMPT.md`**. Sin los HTMLs nuevos no se bloquea ninguna fase; el refinamiento final pixel-perfect (cuando lleguen los mockups) se hace en la Fase 19 o en una mini-fase 19.5 de polish.
 
+## Cierre del rediseño
+
+> **Estado:** Cerrado 2026-05-13 vía `phases/cierre-rediseno/`.
+> **Commits del cierre:**
+> - `3bfd6aa` chore: ignore phase mockup sources in eslint
+> - `2c19f0d` fix(react-hooks): hoist setState out of effects
+> - `195201a` chore(tests): drop unused visual helpers imports
+> - `7af9f16` feat(viewer): inline agent chip with green tokens + confirm dialog on replace
+> - `6d4abbe` test(e2e): adjust agent badge assertions for inline chip
+> - `45a8c8a` feat(viewer): sakura skills strip with inline × remove
+> - `5cd587e` test(visual): seed sidebar test + relax threshold for category count flakiness
+> - `33bdd59` feat(settings): add /settings/variables page with env defaults
+> - `6a0c6fc` feat(drawer): N/MAX counter under variable inputs
+
 ## Próximos pasos sugeridos
 
 1. **Revisar este índice y los 7 PLAN.md** antes de arrancar Fase 10. Pedir cambios si algún scope o prerequisito no convence.
