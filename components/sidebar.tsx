@@ -1,8 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Item, ItemCategory, CATEGORY_LABELS, CATEGORIES, TEMPLATE_SUBCATEGORIES } from "@/lib/database.types";
+import { Item, ItemCategory, CATEGORY_LABELS, CATEGORY_ICONS, WORKSPACE_CATEGORIES } from "@/lib/database.types";
 import { NavGroup } from "./nav-group";
 
 // Cherry blossom branch SVG illustration
@@ -52,46 +53,32 @@ interface SidebarProps {
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
   selectedCategory?: ItemCategory | "all" | "favorites";
-  selectedSubcategory?: string | null;
-  onSelectCategory?: (cat: ItemCategory | "all" | "favorites", subcategory?: string | null) => void;
+  onSelectCategory?: (cat: ItemCategory | "all" | "favorites") => void;
   settingsActive?: boolean;
 }
-
-const SUBCATEGORY_ICONS: Record<string, string> = {
-  Planes: "▦",
-  Test: "◎",
-  Debug: "⬡",
-  n8n: "⟳",
-};
 
 export function Sidebar({
   items = [],
   searchQuery = "",
   onSearchChange,
   selectedCategory = "all",
-  selectedSubcategory = null,
   onSelectCategory,
   settingsActive = false,
 }: SidebarProps) {
   const router = useRouter();
 
-  const counts = (() => {
+  const counts = useMemo(() => {
     const all = items.length;
     const favorites = items.filter((i) => i.is_favorite).length;
     const byCategory: Record<ItemCategory, number> = {
-      template: 0,
-      agente: 0,
-      skill: 0,
+      template: 0, plan: 0, report: 0, output: 0, messaging: 0,
+      agente: 0, skill: 0,
     };
-    const bySubcategory: Record<string, number> = {};
     for (const item of items) {
       byCategory[item.category]++;
-      if (item.subcategory) {
-        bySubcategory[item.subcategory] = (bySubcategory[item.subcategory] || 0) + 1;
-      }
     }
-    return { all, favorites, byCategory, bySubcategory };
-  })();
+    return { all, favorites, byCategory };
+  }, [items]);
 
   const handleSearchChange = (q: string) => {
     if (onSearchChange) {
@@ -101,16 +88,16 @@ export function Sidebar({
     }
   };
 
-  const handleSelect = (cat: ItemCategory | "all" | "favorites", subcategory?: string | null) => {
+  const handleSelect = (cat: ItemCategory | "all" | "favorites") => {
     if (onSelectCategory) {
-      onSelectCategory(cat, subcategory ?? null);
+      onSelectCategory(cat);
     } else {
       router.push("/");
     }
   };
 
-  const isAllSelected = !settingsActive && selectedCategory === "all" && !selectedSubcategory;
-  const isFavoritesSelected = !settingsActive && selectedCategory === "favorites" && !selectedSubcategory;
+  const isAllSelected = !settingsActive && selectedCategory === "all";
+  const isFavoritesSelected = !settingsActive && selectedCategory === "favorites";
 
   return (
     <aside data-region="sidebar" className="w-[var(--sidebar-width)] shrink-0 border-r border-gray-200 flex flex-col bg-white overflow-hidden">
@@ -121,7 +108,7 @@ export function Sidebar({
             <span data-testid="branding-emoji" className="text-[15px] leading-none text-sakura">🌸</span>
           </div>
           <div data-testid="branding-text">
-            <div data-testid="branding-text-title" className="text-[13px] font-semibold tracking-[-0.01em] leading-tight text-sakura">Sakura Studio</div>
+            <div data-testid="branding-text-title" className="text-[13px] font-semibold tracking-[-0.01em] leading-tight text-black">Sakura Studio</div>
             <div className="text-[10px] text-gray-400 mt-[1px] leading-tight">Prompt Manager</div>
           </div>
         </div>
@@ -184,27 +171,32 @@ export function Sidebar({
           </li>
         </NavGroup>
 
-        <NavGroup label="Templates" storageKey="templates" defaultOpen={true}>
-          {TEMPLATE_SUBCATEGORIES.map((sub) => (
-            <li key={sub}>
-              <button
-                onClick={() => handleSelect("template", sub)}
-                className={`flex w-full items-center justify-between rounded-[var(--radius-sm)] px-[12px] py-[6px] text-[13px] transition-colors ${
-                  !settingsActive && selectedCategory === "template" && selectedSubcategory === sub
-                    ? "bg-gray-100 text-black font-medium"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-black font-normal"
-                }`}
-              >
-                <div className="flex items-center gap-[8px]">
-                  <span className={`text-[13px] ${!settingsActive && selectedCategory === "template" && selectedSubcategory === sub ? "opacity-100" : "opacity-70"}`}>{SUBCATEGORY_ICONS[sub] ?? "▸"}</span>
-                  <span>{sub}</span>
-                </div>
-                <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-[10px] px-[6px] py-[1px] min-w-[18px] text-center">
-                  {counts.bySubcategory[sub] || 0}
-                </span>
-              </button>
-            </li>
-          ))}
+        <NavGroup label="Workspace" storageKey="workspace" defaultOpen={true}>
+          {WORKSPACE_CATEGORIES.map((cat) => {
+            const isActive = !settingsActive && selectedCategory === cat;
+            return (
+              <li key={cat}>
+                <button
+                  onClick={() => handleSelect(cat)}
+                  className={`flex w-full items-center justify-between rounded-[var(--radius-sm)] px-[12px] py-[6px] text-[13px] transition-colors ${
+                    isActive
+                      ? "bg-gray-100 text-black font-medium"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-black font-normal"
+                  }`}
+                >
+                  <div className="flex items-center gap-[8px]">
+                    <span className={`text-[13px] ${isActive ? "opacity-100" : "opacity-70"}`}>
+                      {CATEGORY_ICONS[cat]}
+                    </span>
+                    <span>{CATEGORY_LABELS[cat]}</span>
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-[10px] px-[6px] py-[1px] min-w-[18px] text-center">
+                    {counts.byCategory[cat]}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </NavGroup>
 
         <NavGroup label="Agents" storageKey="agents" defaultOpen={true}>
@@ -212,13 +204,13 @@ export function Sidebar({
             <button
               onClick={() => handleSelect("agente")}
               className={`flex w-full items-center justify-between rounded-[var(--radius-sm)] px-[12px] py-[6px] text-[13px] transition-colors ${
-                !settingsActive && selectedCategory === "agente" && !selectedSubcategory
+                !settingsActive && selectedCategory === "agente"
                   ? "bg-gray-100 text-black font-medium"
                   : "text-gray-600 hover:bg-gray-50 hover:text-black font-normal"
               }`}
             >
               <div className="flex items-center gap-[8px]">
-                <span className={`text-[13px] ${!settingsActive && selectedCategory === "agente" && !selectedSubcategory ? "opacity-100" : "opacity-70"}`}>⌥</span>
+                <span className={`text-[13px] ${!settingsActive && selectedCategory === "agente" ? "opacity-100" : "opacity-70"}`}>{CATEGORY_ICONS.agente}</span>
                 <span>All Agents</span>
               </div>
               <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-[10px] px-[6px] py-[1px] min-w-[18px] text-center">
@@ -233,13 +225,13 @@ export function Sidebar({
             <button
               onClick={() => handleSelect("skill")}
               className={`flex w-full items-center justify-between rounded-[var(--radius-sm)] px-[12px] py-[6px] text-[13px] transition-colors ${
-                !settingsActive && selectedCategory === "skill" && !selectedSubcategory
+                !settingsActive && selectedCategory === "skill"
                   ? "bg-gray-100 text-black font-medium"
                   : "text-gray-600 hover:bg-gray-50 hover:text-black font-normal"
               }`}
             >
               <div className="flex items-center gap-[8px]">
-                <span className={`text-[13px] ${!settingsActive && selectedCategory === "skill" && !selectedSubcategory ? "opacity-100" : "opacity-70"}`}>✦</span>
+                <span className={`text-[13px] ${!settingsActive && selectedCategory === "skill" ? "opacity-100" : "opacity-70"}`}>{CATEGORY_ICONS.skill}</span>
                 <span>All Skills</span>
               </div>
               <span className="text-[10px] font-medium text-gray-400 bg-gray-100 rounded-[10px] px-[6px] py-[1px] min-w-[18px] text-center">

@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createItem } from "@/app/actions";
-import { CATEGORY_LABELS, CATEGORIES, ItemCategory } from "@/lib/database.types";
+import { ItemCategory } from "@/lib/database.types";
+import { CategorySelect } from "./category-select";
 
 interface NewItemModalProps {
   isOpen: boolean;
@@ -20,7 +21,6 @@ export function NewItemModal({ isOpen, onClose, onCreated }: NewItemModalProps) 
 
   useEffect(() => {
     if (!isOpen) return;
-    // Reset state when opening
     setTitle("");
     setCategory("template");
     setError(null);
@@ -104,23 +104,14 @@ export function NewItemModal({ isOpen, onClose, onCreated }: NewItemModalProps) 
               </div>
 
               <div>
-                <label htmlFor="new-item-category" className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Category
                 </label>
-                <select
-                  id="new-item-category"
+                <CategorySelect
                   value={category}
-                  onChange={(e) => setCategory(e.target.value as ItemCategory)}
-                  required
+                  onChange={setCategory}
                   disabled={pending}
-                  className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-black bg-white focus:outline-none focus:ring-1 focus:ring-gray-300 disabled:opacity-50"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {CATEGORY_LABELS[cat]}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               {error && (

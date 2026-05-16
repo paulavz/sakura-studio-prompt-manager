@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Item, ItemCategory, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
+import { Item, ItemCategory, CATEGORY_LABELS } from "@/lib/database.types";
 import { ItemCard } from "./item-card";
 import { ItemView } from "./item-view";
 import { Sidebar } from "./sidebar";
@@ -17,7 +17,6 @@ interface GalleryProps {
 export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: GalleryProps) {
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | "all" | "favorites">("all");
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [newModalOpen, setNewModalOpen] = useState(false);
@@ -32,15 +31,12 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
       if (selectedCategory !== "all" && selectedCategory !== "favorites" && item.category !== selectedCategory) {
         return false;
       }
-      if (selectedSubcategory && item.subcategory !== selectedSubcategory) {
-        return false;
-      }
       if (normalizedQuery && !item.title.toLowerCase().includes(normalizedQuery)) {
         return false;
       }
       return true;
     });
-  }, [items, selectedCategory, selectedSubcategory, normalizedQuery]);
+  }, [items, selectedCategory, normalizedQuery]);
 
   const selectedItem = useMemo(() => {
     if (selectedItemId) {
@@ -53,13 +49,11 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
   const filterLabel = useMemo(() => {
     if (selectedCategory === "all") return "All Prompts";
     if (selectedCategory === "favorites") return "Favorites";
-    if (selectedSubcategory) return selectedSubcategory;
     return CATEGORY_LABELS[selectedCategory as ItemCategory];
-  }, [selectedCategory, selectedSubcategory]);
+  }, [selectedCategory]);
 
-  const handleSelectCategory = (cat: ItemCategory | "all" | "favorites", subcategory?: string | null) => {
+  const handleSelectCategory = (cat: ItemCategory | "all" | "favorites") => {
     setSelectedCategory(cat);
-    setSelectedSubcategory(subcategory ?? null);
     setSelectedItemId(null);
   };
 
@@ -71,7 +65,6 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
-        selectedSubcategory={selectedSubcategory}
         onSelectCategory={handleSelectCategory}
       />
 
@@ -93,10 +86,12 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
           </div>
           <button
             onClick={() => setNewModalOpen(true)}
-            className="w-[28px] h-[28px] rounded-[var(--radius-sm)] border border-gray-200 flex items-center justify-center text-[13px] text-gray-400 hover:bg-gray-50 hover:text-black transition-all"
+            className="w-[28px] h-[28px] rounded-[var(--radius-sm)] border border-gray-200 flex items-center justify-center text-gray-400 hover:bg-gray-50 hover:text-black transition-all"
             title="New prompt"
           >
-            +
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 2V10M2 6H10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+            </svg>
           </button>
         </div>
 
@@ -149,7 +144,6 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
           setNewModalOpen(false);
           setSelectedItemId(id);
           setSelectedCategory("all");
-          setSelectedSubcategory(null);
           setSearchQuery("");
           router.refresh();
         }}

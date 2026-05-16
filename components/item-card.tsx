@@ -11,6 +11,10 @@ interface ItemCardProps {
 
 const CATEGORY_BG: Record<ItemCategory, string> = {
   template: "var(--color-tag-blue)",
+  plan: "var(--color-tag-pink)",
+  report: "#F5F0FF",
+  output: "#FFF8E8",
+  messaging: "#E8F8F5",
   agente: "var(--color-tag-green)",
   skill: "var(--color-tag-orange)",
 };

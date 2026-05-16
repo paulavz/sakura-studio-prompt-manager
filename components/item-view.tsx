@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Item, ItemCategory, AppliedSkill, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
+import { Item, ItemCategory, AppliedSkill } from "@/lib/database.types";
+import { CategorySelect } from "@/components/category-select";
 import { useItemState } from "@/hooks/use-item-state";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { hasVariables } from "@/lib/variables";
@@ -21,11 +22,6 @@ interface ItemViewProps {
   minVarLength?: number;
   maxVarLength?: number;
   embedded?: boolean;
-}
-
-function asItemCategory(value: string): ItemCategory {
-  if (CATEGORIES.includes(value as ItemCategory)) return value as ItemCategory;
-  return "template";
 }
 
 export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded = false }: ItemViewProps) {
@@ -200,17 +196,11 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
-          <select
+          <CategorySelect
             value={category}
-            onChange={(e) => setCategory(asItemCategory(e.target.value))}
-            className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 border-none cursor-pointer"
-          >
-            {CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {CATEGORY_LABELS[cat]}
-              </option>
-            ))}
-          </select>
+            onChange={(cat) => setCategory(cat)}
+            variant="pill"
+          />
 
           <div className="flex flex-wrap items-center gap-2">
             {tags.map((tag) => (
