@@ -4,7 +4,8 @@
       "Bash(python *)",
       "Bash(npx tsc *)",
       "Bash(npm test *)",
-      "WebFetch(domain:api.anthropic.com)"
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(node --test lib/__tests__/markdown-roundtrip.test.ts)"
     ]
   },
   "enabledPlugins": {
