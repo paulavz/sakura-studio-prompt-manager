@@ -6,26 +6,20 @@
 // so an authenticated caller could otherwise read another user's data.
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ItemCategory } from "@/lib/database.types";
+import { ItemCategory, CATEGORIES } from "@/lib/database.types";
 import { isValidSlug } from "@/lib/tags";
 import { saveItemComplete } from "@/lib/versioning";
 import { DEFAULT_OWNER } from "@/lib/env";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-
-const CATEGORIES: ItemCategory[] = ["template", "agente", "skill"];
 
 function isValidCategory(value: string): value is ItemCategory {
   return (CATEGORIES as string[]).includes(value);
 }
 
-export async function createItemAction(
-  _prev: unknown,
-  formData: FormData
-): Promise<{ error?: string }> {
-  const title = formData.get("title") as string;
-  const category = formData.get("category") as string;
-
+export async function createItem(
+  title: string,
+  category: string
+): Promise<{ id?: string; error?: string }> {
   if (!title || !title.trim()) {
     return { error: "Title is required." };
   }
@@ -54,7 +48,7 @@ export async function createItemAction(
   }
 
   revalidatePath("/");
-  redirect(`/items/${data.id}`);
+  return { id: data.id };
 }
 
 // TODO(skill-unify): appliedSkills param disappears when skills are derived from content.

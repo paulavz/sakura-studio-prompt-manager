@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Item, ItemCategory, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
 import { ItemCard } from "./item-card";
 import { ItemView } from "./item-view";
 import { Sidebar } from "./sidebar";
+import { NewItemModal } from "./new-item-modal";
 
 interface GalleryProps {
   items: Item[];
@@ -14,10 +15,12 @@ interface GalleryProps {
 }
 
 export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: GalleryProps) {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<ItemCategory | "all" | "favorites">("all");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [newModalOpen, setNewModalOpen] = useState(false);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -88,13 +91,13 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
               </span>
             </div>
           </div>
-          <Link
-            href="/items/new"
+          <button
+            onClick={() => setNewModalOpen(true)}
             className="w-[28px] h-[28px] rounded-[var(--radius-sm)] border border-gray-200 flex items-center justify-center text-[13px] text-gray-400 hover:bg-gray-50 hover:text-black transition-all"
             title="New prompt"
           >
             +
-          </Link>
+          </button>
         </div>
 
         {/* Card List */}
@@ -138,6 +141,19 @@ export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: Galler
           </div>
         )}
       </div>
+
+      <NewItemModal
+        isOpen={newModalOpen}
+        onClose={() => setNewModalOpen(false)}
+        onCreated={(id) => {
+          setNewModalOpen(false);
+          setSelectedItemId(id);
+          setSelectedCategory("all");
+          setSelectedSubcategory(null);
+          setSearchQuery("");
+          router.refresh();
+        }}
+      />
 
       <style jsx global>{`
         @keyframes zen-pulse {
