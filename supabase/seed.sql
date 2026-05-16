@@ -1,75 +1,124 @@
--- Sakura Prompt Studio — Seeds de prueba (Fase 2)
+-- Sakura Prompt Studio — Seeds de prueba (Fase 2, schema 2026-05-15)
 --
 -- INSTRUCCIONES:
--- 1. Copia tu UUID de usuario v1 desde Supabase Dashboard → Auth → Users.
--- 2. Reemplaza 'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c' abajo con ese valor (incluye las comillas).
--- 3. Ejecuta este script en Supabase Dashboard → SQL Editor → New query.
+-- 1. Tu UUID de usuario v1 es: 7f13129c-5676-4e92-843a-76ee817dfcf3
+-- 2. Ejecuta este script en Supabase Dashboard → SQL Editor → New query.
 --
--- Nota: si ya tienes items creados manualmente, puedes saltar este archivo.
+-- Este script es IDEMPOTENTE: borra primero los datos existentes del owner
+-- y luego los vuelve a insertar. Puedes ejecutarlo tantas veces como quieras.
 
-insert into public.items (title, content, category, tags, is_favorite, owner)
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 1. LIMPIEZA (cascade: versions → items → tags)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+delete from public.versions
+where item_id in (
+  select id from public.items where owner = '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
+);
+
+delete from public.items
+where owner = '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid;
+
+delete from public.tags
+where owner = '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 2. TAGS (deben existir antes que los items por el trigger de integridad)
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+insert into public.tags (slug, label, owner)
+values
+  ('testing',      'Testing',      '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('playwright',   'Playwright',   '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('code_review',  'Code Review',  '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('git',          'Git',          '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('frontend',     'Frontend',     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('html',         'HTML',         '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('rol',          'Rol',          '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('forms',        'Forms',        '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('ux',           'UX',           '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('automation',   'Automation',   '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('n8n',          'n8n',          '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('python',       'Python',       '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('excel',        'Excel',        '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('database',     'Database',     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid),
+  ('migration',    'Migration',    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid);
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- 3. ITEMS
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+insert into public.items (title, content, category, subcategory, tags, is_favorite, owner)
 values
   (
     'Plan de testing E2E',
     'Crea un plan de testing end-to-end para {{nombre_proyecto}} usando Playwright.',
-    'plan',
+    'template',
+    'Planes',
     '["testing", "playwright"]'::jsonb,
     true,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
     'Template PR Review',
     'Revisa este PR siguiendo las guidelines del proyecto.',
     'template',
+    null,
     '["code_review", "git"]'::jsonb,
     false,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
-    'Generar HTML semántico',
-    'Dado el siguiente diseño, genera el HTML semántico correspondiente.',
-    'data_output',
+    'Generar HTML semantico',
+    'Dado el siguiente diseno, genera el HTML semantico correspondiente.',
+    'template',
+    null,
     '["frontend", "html"]'::jsonb,
     false,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
     'Agente — Senior Frontend',
-    'Actúa como el agente Senior Frontend Engineer para este desarrollo.\n\nTu tarea es refactorizar el componente dado aplicando patrones de composición.',
+    'Actua como el agente Senior Frontend Engineer para este desarrollo.\n\nTu tarea es refactorizar el componente dado aplicando patrones de composicion.',
     'agente',
+    null,
     '["rol", "frontend"]'::jsonb,
     true,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
-    'Skill — Validación de forms',
-    '\n\nUsa la skill Validación de Formularios para este desarrollo.',
+    'Skill — Validacion de forms',
+    '\n\nUsa la skill Validacion de Formularios para este desarrollo.',
     'skill',
+    null,
     '["forms", "ux"]'::jsonb,
     false,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
-    'Automatización n8n',
-    'Construye un workflow en n8n que reciba un webhook de {{servicio_origen}} y envíe los datos formateados a {{servicio_destino}}.',
+    'Automatizacion n8n',
+    'Construye un workflow en n8n que reciba un webhook de {{servicio_origen}} y envie los datos formateados a {{servicio_destino}}.',
     'template',
+    'n8n',
     '["automation", "n8n"]'::jsonb,
     false,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
     'Salida Excel desde Python',
     'Genera un script de Python que lea {{archivo_entrada}} y produzca un archivo Excel con las columnas: ID, Nombre, Estado.',
-    'data_output',
+    'template',
+    null,
     '["python", "excel"]'::jsonb,
     false,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   ),
   (
-    'Plan de migración de BD',
+    'Plan de migracion de BD',
     'Define un plan paso a paso para migrar la base de datos de {{motor_actual}} a {{motor_nuevo}} sin downtime.',
-    'plan',
+    'template',
+    'Planes',
     '["database", "migration"]'::jsonb,
     true,
-    'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'::uuid
+    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
   );

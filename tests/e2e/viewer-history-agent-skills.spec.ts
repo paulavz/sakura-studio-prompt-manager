@@ -73,8 +73,13 @@ test.describe("Viewer history drawer + agent chip + skills scan (Fase 13–15)",
     const drawer = page.locator('[data-testid="history-drawer"]');
     await expect(drawer).toBeVisible();
 
-    const firstRestoreBtn = drawer.locator('button:has-text("Restore")').first();
+    const firstRestoreBtn = drawer.locator('button:has-text("Restore content")').first();
     await firstRestoreBtn.click();
+
+    // Confirm the restore dialog
+    const confirmDialog = page.locator('role=alertdialog');
+    await expect(confirmDialog).toBeVisible();
+    await confirmDialog.locator('button:has-text("Restore")').click();
     await page.waitForTimeout(800);
 
     // Content should revert (title is NOT part of the version snapshot)
@@ -164,7 +169,8 @@ test.describe("Viewer history drawer + agent chip + skills scan (Fase 13–15)",
     // The skill "Visual Test Skill" should be disabled if it exists in the list
     // (It may not exist as a DB skill since seed doesn't include it; this test
     // primarily validates the prop wiring.)
-    await skillSelector.locator('button[aria-label="Close"]').click();
+    // Close the dropdown by pressing Escape
+    await page.keyboard.press("Escape");
   });
 
   // ─── E15.3: Remove skill via × button ────────────────────────────────────

@@ -57,4 +57,10 @@ test.describe("Variable chips", () => {
     });
     expect(sakuraValue.toLowerCase()).toBe("#ffb7c5");
   });
+
+  test("variable chip text color equals variable-text token", async ({ page }) => {
+    const chip = page.locator(REGIONS.variableChip).first();
+    await chip.waitFor({ state: "visible" });
+    await expectColorToken(chip, "color", "rgb(196, 94, 120)");
+  });
 });

@@ -6,7 +6,9 @@ describe("markdownToHtml", () => {
   it("renders {{var}} as chip in paragraphs", () => {
     const html = markdownToHtml("Hello {{name}} world.");
     assert.ok(html.includes('data-testid="variable-chip"'));
+    assert.ok(html.includes('class="variable-chip"'));
     assert.ok(html.includes("{{name}}"));
+    assert.ok(!html.includes("style="));
   });
 
   it("does not render chip inside fenced code blocks", () => {

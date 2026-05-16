@@ -27,6 +27,9 @@ export const VariableChip = Mark.create<VariableChipOptions>({
       {
         tag: 'span[data-testid="variable-chip"]',
       },
+      {
+        tag: "span.variable-chip",
+      },
     ];
   },
 
@@ -36,8 +39,7 @@ export const VariableChip = Mark.create<VariableChipOptions>({
       mergeAttributes(
         {
           "data-testid": "variable-chip",
-          style:
-            "display:inline-flex;align-items:center;border-radius:0.25rem;padding:0.125rem 0.375rem;font-size:0.75rem;background-color:var(--color-sakura-20);border:1px solid var(--color-sakura-50);color:var(--color-variable-text);font-family:var(--font-mono);",
+          class: "variable-chip",
         },
         HTMLAttributes
       ),

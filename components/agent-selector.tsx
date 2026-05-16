@@ -133,7 +133,7 @@ export function AgentSelector({
                 <p className="text-sm text-gray-400">Loading agents...</p>
               ) : agents.length === 0 ? (
                 <p className="text-sm text-gray-400">
-                  No agents available. Create an item with category &quot;Agentes&quot; first.
+                  No agents available. Create an item with category &quot;Agents&quot; first.
                 </p>
               ) : (
                 <div className="space-y-2">

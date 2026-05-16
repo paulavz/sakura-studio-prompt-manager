@@ -42,6 +42,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
   const [pendingAgentTitle, setPendingAgentTitle] = useState<string | null>(null);
   const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tagDropdownRef = useRef<HTMLDivElement>(null);
+  const addSkillBtnRef = useRef<HTMLButtonElement>(null);
 
   useClickOutside(tagDropdownRef, () => setShowTagDropdown(false), showTagDropdown);
 
@@ -139,8 +140,9 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
     try {
       await navigator.clipboard.writeText(editedContent);
       setCopied(true);
+      setPetalTrigger((n) => n + 1);
       if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
-      copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+      copiedTimeoutRef.current = setTimeout(() => setCopied(false), 1400);
     } catch {
       // Fail silently
     }
@@ -214,11 +216,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
             {tags.map((tag) => (
               <span
                 key={tag}
-                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs ${
-                  hasVariables(editedContent)
-                    ? "text-variable-text bg-sakura-soft border-sakura/40"
-                    : "text-gray-600 bg-gray-50 border-gray-200"
-                }`}
+                className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs text-variable-text bg-sakura-soft border-sakura/40"
               >
                 {tag}
                 <button
@@ -321,6 +319,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           </button>
           {category !== "skill" && (
             <button
+              ref={addSkillBtnRef}
               id="add-skill-btn"
               onClick={() => setSkillSelectorOpen(true)}
               className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
@@ -354,16 +353,39 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           {hasVariables(editedContent) && (
             <button
               onClick={() => setDrawerOpen(true)}
-              className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
+              className="rounded-md border border-sakura px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:shadow-[0_0_12px_var(--color-sakura-glow)] hover:border-sakura"
             >
-              Use Template
+              <span className="flex items-center gap-1.5">
+                <span className="text-xs">🌸</span>
+                Use Template
+              </span>
             </button>
           )}
           <button
+            data-testid="copy-btn"
             onClick={handleCopy}
-            className="rounded-md border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300"
+            className={`inline-flex items-center gap-[6px] rounded-md border px-4 py-1.5 text-sm font-medium transition-colors ${
+              copied
+                ? "border-gray-200 text-gray-700"
+                : "border-gray-200 text-gray-700 hover:border-sakura hover:text-sakura"
+            }`}
           >
-            {copied ? "✓ Copied" : "Copy raw"}
+            {copied ? (
+              <>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 8L7 12L13 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Copied
+              </>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="2" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.2"/>
+                  <path d="M5 5H13C13.5523 5 14 5.44772 14 6V13C14 13.5523 13.5523 14 13 14H6C5.44772 14 5 13.5523 5 13V5Z" stroke="currentColor" strokeWidth="1.2"/>
+                </svg>
+                Copy
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -374,13 +396,14 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
           data-testid="applied-skills-panel"
           className="flex items-center gap-2 overflow-x-auto px-8 py-2"
         >
+          <span className="text-[11px] text-gray-500 shrink-0">Active skills:</span>
           {draftSkillNames.map((name) => (
             <span
               key={name}
               className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium shrink-0"
               style={{
                 backgroundColor: "var(--color-sakura-soft)",
-                borderColor: "rgba(255, 183, 197, 0.4)",
+                borderColor: "var(--color-sakura-50)",
                 color: "var(--color-variable-text)",
               }}
             >
@@ -420,6 +443,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         onClose={() => setDrawerOpen(false)}
         minVarLength={minVarLength}
         maxVarLength={maxVarLength}
+        onCopy={() => setPetalTrigger((n) => n + 1)}
       />
 
       <SkillSelector
@@ -427,6 +451,7 @@ export function ItemView({ item, minVarLength = 1, maxVarLength = 4000, embedded
         onClose={() => setSkillSelectorOpen(false)}
         onSelect={handleAddSkill}
         appliedSkillNames={draftSkillNames}
+        anchorRef={addSkillBtnRef}
       />
 
       <AgentSelector

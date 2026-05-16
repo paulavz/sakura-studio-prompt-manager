@@ -9,12 +9,10 @@ interface ItemCardProps {
   isSelected?: boolean;
 }
 
-const CATEGORY_COLORS: Record<ItemCategory, string> = {
-  template: "bg-tag-blue",
-  plan: "bg-tag-pink",
-  agente: "bg-tag-green",
-  skill: "bg-tag-orange",
-  data_output: "bg-gray-100",
+const CATEGORY_BG: Record<ItemCategory, string> = {
+  template: "var(--color-tag-blue)",
+  agente: "var(--color-tag-green)",
+  skill: "var(--color-tag-orange)",
 };
 
 export function ItemCard({ item, onSelect, isSelected }: ItemCardProps) {
@@ -66,8 +64,8 @@ export function ItemCard({ item, onSelect, isSelected }: ItemCardProps) {
             data-testid="tag-chip"
             className={`text-[10px] font-medium rounded-[4px] px-[6px] py-[2px] font-mono whitespace-nowrap border ${
               hasVars
-                ? "text-variable-text bg-sakura-soft border-sakura/40"
-                : "text-gray-600 bg-gray-100 border-gray-200"
+                ? "text-variable-text bg-[var(--color-sakura-18)] border-sakura/30"
+                : "text-tag-chip-text bg-tag-chip-bg border-tag-chip-border"
             }`}
           >
             {tag}
@@ -77,7 +75,10 @@ export function ItemCard({ item, onSelect, isSelected }: ItemCardProps) {
 
       {/* Bottom row: category + date */}
       <div className="flex items-center justify-between">
-        <span className={`text-[10px] font-medium text-gray-600 border border-gray-200 rounded-[4px] px-[7px] py-[2px] whitespace-nowrap ${CATEGORY_COLORS[item.category]}`}>
+        <span
+          className="text-[10px] font-medium text-gray-600 border border-gray-200 rounded-[4px] px-[7px] py-[2px] whitespace-nowrap"
+          style={{ backgroundColor: CATEGORY_BG[item.category] }}
+        >
           {item.category.charAt(0).toUpperCase() + item.category.slice(1)}
         </span>
         <span className="text-[10px] text-gray-400 font-mono">

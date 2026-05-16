@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, RefObject } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { getSkills } from "@/app/actions";
+import { useClickOutside } from "@/hooks/use-click-outside";
 
 interface SkillSelectorProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (skill: SkillItem) => void;
   appliedSkillNames?: string[];
+  anchorRef?: RefObject<HTMLElement | null>;
 }
 
 interface SkillItem {
@@ -16,10 +18,11 @@ interface SkillItem {
   title: string;
 }
 
-export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [] }: SkillSelectorProps) {
+export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [], anchorRef }: SkillSelectorProps) {
   const [skills, setSkills] = useState<SkillItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const dialogRef = useRef<HTMLElement | null>(null);
+  const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -29,7 +32,7 @@ export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [
       .finally(() => setLoading(false));
 
     const timer = setTimeout(() => {
-      const firstBtn = dialogRef.current?.querySelector<HTMLElement>(
+      const firstBtn = dropdownRef.current?.querySelector<HTMLElement>(
         "button:not(:disabled)"
       );
       firstBtn?.focus();
@@ -48,6 +51,21 @@ export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [
     };
   }, [isOpen, onClose]);
 
+  // Measure anchor position when opening
+  useEffect(() => {
+    if (!isOpen) return;
+    const anchor = anchorRef?.current;
+    if (!anchor) return;
+
+    const rect = anchor.getBoundingClientRect();
+    setPosition({
+      top: rect.bottom + 6,
+      left: rect.left,
+    });
+  }, [isOpen, anchorRef]);
+
+  useClickOutside(dropdownRef, onClose, isOpen);
+
   const handleSelect = (skill: SkillItem) => {
     if (appliedSkillNames.includes(skill.title)) return;
     onSelect(skill);
@@ -57,83 +75,61 @@ export function SkillSelector({ isOpen, onClose, onSelect, appliedSkillNames = [
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/10"
-          />
-          <motion.aside
-            key="skill-selector"
-            ref={dialogRef}
-            data-testid="skill-selector"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Add Skill"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 340, damping: 32 }}
-            className="fixed right-0 top-0 z-50 flex h-full w-full max-w-sm md:max-w-md flex-col border-l border-gray-200 bg-white shadow-xl"
-          >
-            <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-              <h2 className="text-sm font-semibold text-black">Add Skill</h2>
-              <button
-                aria-label="Close"
-                onClick={onClose}
-                className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-black"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <path
-                    d="M12 4L4 12M4 4l8 8"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
+        <motion.div
+          ref={dropdownRef}
+          data-testid="skill-selector"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add Skill"
+          initial={{ opacity: 0, y: -4, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -4, scale: 0.97 }}
+          transition={{ duration: 0.15, ease: [0.32, 0.72, 0, 1] }}
+          className="fixed z-50 w-[240px] rounded-lg border border-gray-200 bg-white shadow-xl"
+          style={{
+            top: position.top,
+            left: position.left,
+          }}
+        >
+          <div className="px-3 py-2 border-b border-gray-100">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Skills</h2>
+          </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">
-              {loading ? (
-                <p className="text-sm text-gray-400">Loading skills...</p>
-              ) : skills.length === 0 ? (
-                <p className="text-sm text-gray-400">
-                  No skills available. Create a item with category &quot;skill&quot; first.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {skills.map((skill) => {
-                    const isApplied = appliedSkillNames.includes(skill.title);
-                    return (
-                      <button
-                        key={skill.id}
-                        onClick={() => handleSelect(skill)}
-                        disabled={isApplied}
-                        className={`w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors ${
-                          isApplied
-                            ? "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
-                            : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50"
-                        }`}
-                      >
-                        <span className="flex items-center justify-between">
-                          {skill.title}
-                          {isApplied && (
-                            <span className="text-xs text-gray-300">Applied</span>
-                          )}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </motion.aside>
-        </>
+          <div className="max-h-[280px] overflow-y-auto py-1">
+            {loading ? (
+              <p className="px-3 py-2 text-xs text-gray-400">Loading skills...</p>
+            ) : skills.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-gray-400">
+                No skills available. Create an item with category &quot;skill&quot; first.
+              </p>
+            ) : (
+              <div className="space-y-[1px]">
+                {skills.map((skill) => {
+                  const isApplied = appliedSkillNames.includes(skill.title);
+                  return (
+                    <button
+                      key={skill.id}
+                      onClick={() => handleSelect(skill)}
+                      disabled={isApplied}
+                      className={`w-full px-3 py-2 text-left text-[13px] transition-colors ${
+                        isApplied
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className="flex items-center justify-between">
+                        {skill.title}
+                        {isApplied && (
+                          <span className="text-[10px] text-gray-300">Applied</span>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

@@ -18,17 +18,18 @@ test.describe("Settings navigation", () => {
 
     // Should be on settings page
     await expect(page.locator('[data-testid="settings-tags-page"]')).toBeVisible();
-    await expect(page.locator('h2:has-text("Tags")')).toBeVisible();
+    await expect(page.locator('[data-testid="tags-title"]')).toBeVisible();
   });
 
-  test("can navigate back to gallery from Settings", async ({ page }) => {
+  test("can navigate back to gallery from Settings via sidebar", async ({ page }) => {
     await page.goto("/settings/tags");
     await page.waitForLoadState("networkidle");
 
-    const backLink = page.locator('header a:has-text("Back to gallery")');
-    await expect(backLink).toBeVisible();
+    // Click "All Prompts" in the sidebar to go back to gallery
+    const allPromptsBtn = page.locator('aside button:has-text("All Prompts")');
+    await expect(allPromptsBtn).toBeVisible();
 
-    await backLink.click();
+    await allPromptsBtn.click();
     await page.waitForLoadState("networkidle");
 
     // Should be back on gallery
@@ -53,21 +54,18 @@ test.describe("Settings navigation", () => {
     await page.goto("/settings/tags");
     await page.waitForLoadState("networkidle");
 
-    // Click Variables in sub-nav
-    const variablesLink = page.locator('nav a:has-text("Variables")');
+    // Click Variables Drawer in sub-nav
+    const variablesLink = page.locator('nav a:has-text("Variables Drawer")');
     await expect(variablesLink).toBeVisible();
     await variablesLink.click();
     await page.waitForLoadState("networkidle");
 
     // Should be on variables page
     await expect(page.locator('[data-testid="settings-variables-page"]')).toBeVisible();
-    await expect(page.locator('h2:has-text("Variables Drawer Defaults")')).toBeVisible();
+    await expect(page.locator('[data-testid="variables-title"]')).toBeVisible();
 
     // Should show the defaults
-    await expect(page.locator('text=Minimum length')).toBeVisible();
-    await expect(page.locator('text=Maximum length')).toBeVisible();
-
-    // Hint visible
-    await expect(page.locator('text=.env.local')).toBeVisible();
+    await expect(page.locator('text=MIN_VAR_LENGTH')).toBeVisible();
+    await expect(page.locator('text=MAX_VAR_LENGTH')).toBeVisible();
   });
 });

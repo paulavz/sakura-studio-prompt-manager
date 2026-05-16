@@ -29,26 +29,46 @@ Dashboard de gestión de prompts con estética Japandi. Permite organizar, param
 
 El mockup de Sakura Prompt Studio tiene **dos accesos** al mismo diseño; el agente o la desarrolladora deben usar **al menos uno** visible en contexto. Si la URL no carga en el IDE, el HTML del repo es la referencia visual operativa.
 
-### 1. URL (Anthropic Design)
+### 1. URL (Anthropic Design) — iteración vigente "Demo"
 
 Útil cuando el entorno abre enlaces Anthropic o para revisión humana en el navegador:
 
-`https://api.anthropic.com/v1/design/h/f-3unLnvyiTxyFB_I9cZUQ?open_file=Sakura+Prompt+Studio.html`
+`https://api.anthropic.com/v1/design/h/NChn6sxN06_LSWv_KtdrOA?open_file=Sakura+Prompt+Studio.html`
+
+URLs anteriores (histórico, **no** usar como referencia visual actual):
+- `https://api.anthropic.com/v1/design/h/f-3unLnvyiTxyFB_I9cZUQ?open_file=Sakura+Prompt+Studio.html` (mockup original)
 
 ### 2. HTML standalone en el repositorio (recomendado para agentes)
 
-**Claude Code, OpenCode, Cursor, etc.:** adjuntar el archivo con `@` (ruta desde la raíz del repo) para que el layout entre en contexto **sin** depender de fetch a dominios externos:
+**Claude Code, OpenCode, Cursor, etc.:** adjuntar el archivo con `@` (ruta desde la raíz del repo) para que el layout entre en contexto **sin** depender de fetch a dominios externos.
 
-`design/Sakura Prompt Studio _standalone_.html`
+**Referencia visual vigente (autoritativa):**
+
+`design/last Sakura Prompt Studio _Demo standalone_.html`
+
+Versiones anteriores conservadas para historial (no usar como referencia actual):
+
+- `design/Sakura Prompt Studio - Phase 9.1 _standalone_.html` (iteración previa, ya aterrizada en `PLAN-DESIGN-FIXES.md`)
+- `design/Sakura Prompt Studio _standalone_.html` (mockup original)
 
 *(Export: Anthropic Design → «Export as standalone HTML»; el nombre del archivo puede variar ligeramente, pero debe vivir bajo `design/` y mantenerse versionado.)*
 
-**Prioridad:** reglas textuales de esta sección **siempre** aplican; la paridad visual se valida contra **URL y/o HTML local** según lo que cada herramienta pueda leer.
+**Bundle decodificado:** el HTML standalone empaqueta el JSX en base64+gzip dentro de `<script type="__bundler/manifest">`. Para diffear contra el mockup sin ejecutar JS, usar el extractor `design/_extract_bundle.py` (genera `design/_extracted/*.jsx` legibles: Sidebar, Gallery, PromptViewer, VariablesDrawer, HistoryDrawer, Settings, PetalRain, Markdown). Tratar los archivos extraídos como spec de solo lectura.
+
+**Prioridad:** reglas textuales de esta sección **siempre** aplican; la paridad visual se valida contra **URL y/o HTML local** según lo que cada herramienta pueda leer. Si hay conflicto entre el HTML "Demo" vigente y un plan previo (`PLAN-DESIGN-FIXES.md`), gana el HTML vigente — pero antes de implementar el cambio, consultar `PLAN-DESIGN-DELTA-V2.md` para ver si la diferencia ya está catalogada y bloqueada por una pregunta abierta al usuario.
 
 Reglas estéticas:
 
 - Fondo blanco sólido `#FFFFFF`, tipografía negra `#000000`.
-- Rosa Sakura `#FFB7C5` reservado para 3 usos exclusivos: glow rosa difuso en hover de cards, chips de variables `{{ }}`, animaciones de feedback. Nunca usarlo en otros componentes.
+- Rosa Sakura `#FFB7C5` reservado para los siguientes usos exclusivos:
+  1. Glow rosa difuso en hover de cards.
+  2. Chips de variables `{{ }}` (en cards, editor, y drawer).
+  3. Animaciones de feedback (lluvia de pétalos, success states del botón Copy).
+  4. **Tag chips de cards cuando el prompt contiene variables** (decisión 2026-05-15, Q5 de `PLAN-DESIGN-DELTA-V2.md`).
+  5. **Markdown markers en modo Render**: bullets, números de listas ordenadas, borde izquierdo de blockquotes, fill de checkboxes marcadas (decisión 2026-05-15, Q16). Solo aplica al renderer de markdown, no a texto regular.
+  6. **Estado activo de card seleccionada en galería**: anillo rosa + glow (decisión 2026-05-15, Q6).
+
+  Nunca usarlo fuera de estos usos enumerados.
 - Bordes 1px sutiles, padding/gap generosos, cero decoración superflua.
 - Tokens (colores, espaciados, fuentes) centralizados en `tailwind.config.ts` — prohibido hardcodear `#FFB7C5` en componentes.
 
@@ -62,7 +82,8 @@ Todas las tablas viven en el schema `public`. Las claves primarias son `uuid` co
 | `id` | `uuid` PK | `default gen_random_uuid()` |
 | `title` | `text` | `not null` |
 | `content` | `text` | markdown, `not null default ''` |
-| `category` | `text` | `check (category in ('template','plan','data_output','agente','skill'))` |
+| `category` | `text` | `check (category in ('template','agente','skill'))` — `plan` y `data_output` eliminadas el 2026-05-15 (Q3 de `PLAN-DESIGN-DELTA-V2.md`); items existentes migrados a `template`/`agente` durante la migración correspondiente. |
+| `subcategory` | `text` | nullable. Valores esperados para `category='template'`: `'Planes' | 'Test' | 'Debug' | 'n8n'`. Para otras categorías queda en `null`. Añadida 2026-05-15 (Q1). Sin check constraint (lista abierta para futuras incorporaciones). |
 | `tags` | `jsonb` | array de slugs `snake_case`, `default '[]'::jsonb` |
 | `is_favorite` | `boolean` | `default false` |
 | `owner` | `uuid` | FK → `auth.users(id)` `on delete cascade`, `not null` |
@@ -115,11 +136,15 @@ Tabla separada para gestión limpia desde Settings.
 
 ## Categorías de contenido
 
-- **Templates** — prompts estructurados (planes, tests, debugging, automatización n8n).
-- **Planes prefabricados** — listos para usar, sin inputs.
-- **Salida de data** — formatos específicos (Excel/Python, HTML).
-- **Agentes** — configs de sistema (ej. `PR.md`).
-- **Skills** — fragmentos de conocimiento independientes, inyectables en otros prompts.
+A partir del 2026-05-15 (Q3 de `PLAN-DESIGN-DELTA-V2.md`) las categorías vigentes son tres:
+
+- **Templates** (`template`) — prompts estructurados. Subdividen vía `items.subcategory`: `Planes` (antes categoría `plan`), `Test`, `Debug`, `n8n`. Los planes prefabricados ahora viven aquí con `subcategory='Planes'`.
+- **Agentes** (`agente`) — configs de sistema (ej. `PR.md`).
+- **Skills** (`skill`) — fragmentos de conocimiento independientes, inyectables en otros prompts.
+
+Categorías eliminadas (no usar en código nuevo):
+- ~~`plan`~~ → migrar a `template` + `subcategory='Planes'`.
+- ~~`data_output`~~ → eliminada sin reemplazo directo; los items existentes se migran caso a caso (típicamente `template`).
 
 ## Sistemas centrales
 
@@ -169,6 +194,7 @@ Paralelo a Skills pero con semántica distinta: un agente define **quién ejecut
   - No refleja agentes asignados pero no guardados.
 - **Alerta de cambios sin guardar:** mismo flujo que Skills.
 - Utilidad pura: `lib/agent.ts` (detección, reemplazo, extracción del nombre desde la línea inicial).
+- **Divergencia consciente con el mockup "Demo" (2026-05-15, Q7):** el mockup más reciente no muestra un botón `Assign Agent` separado. Se mantiene como botón propio en el toolbar del viewer porque la semántica "quién ejecuta" (agente) es distinta a "qué herramientas" (skills) y CLAUDE.md la define como flow de primera clase. **No** fusionar en el dropdown de Add Skill.
 
 ### 3. Galería (Opción B)
 

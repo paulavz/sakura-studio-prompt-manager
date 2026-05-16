@@ -13,13 +13,7 @@ import { DEFAULT_OWNER } from "@/lib/env";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-const CATEGORIES: ItemCategory[] = [
-  "template",
-  "plan",
-  "data_output",
-  "agente",
-  "skill",
-];
+const CATEGORIES: ItemCategory[] = ["template", "agente", "skill"];
 
 function isValidCategory(value: string): value is ItemCategory {
   return (CATEGORIES as string[]).includes(value);

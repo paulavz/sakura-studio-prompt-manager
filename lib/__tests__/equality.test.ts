@@ -33,4 +33,10 @@ describe("arraysEqualUnordered (with key)", () => {
     const b = [{ id: "y" }];
     assert.strictEqual(arraysEqualUnordered(a, b, (o) => o.id), false);
   });
+
+  it("ignores non-key fields", () => {
+    const a = [{ id: "x", name: "Foo" }];
+    const b = [{ id: "x", name: "Bar" }];
+    assert.strictEqual(arraysEqualUnordered(a, b, (o) => o.id), true);
+  });
 });

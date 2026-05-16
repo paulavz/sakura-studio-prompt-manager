@@ -106,6 +106,17 @@ test.describe("Viewer inline editing (Fase 12.5)", () => {
 
   // ─── E12.5: Paste plain text by default ──────────────────────────────────
 
+  test("E12.6: Copy button is present and has icon + label", async ({ page }) => {
+    // Find the Copy button
+    const copyBtn = page.locator('[data-testid="copy-btn"]');
+    await expect(copyBtn).toBeVisible();
+    await expect(copyBtn).toContainText("Copy");
+
+    // Should contain an SVG icon (two rects/paths for copy icon)
+    const svgCount = await copyBtn.locator("svg").count();
+    expect(svgCount).toBeGreaterThan(0);
+  });
+
   test("E12.5: paste HTML as plain text in Tiptap", async ({ page }) => {
     // Focus editor
     const editor = page.locator('.ProseMirror').first();

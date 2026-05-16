@@ -3,7 +3,7 @@
 -- Run in Supabase SQL Editor or via psql.
 
 -- Replace with your actual v1 user UUID
--- \set owner_uuid 'd03d60cc-64f0-49f2-8a35-c39fefa6ef8c'
+-- \set owner_uuid '7f13129c-5676-4e92-843a-76ee817dfcf3'
 
 DELETE FROM public.versions
 WHERE item_id IN (

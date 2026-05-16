@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
 import { VariableChip } from "./tiptap-variable-chip";
 import { markdownToHtml, htmlToMarkdown } from "@/lib/markdown";
 
@@ -17,7 +19,14 @@ export function ItemEditor({ mode, value, onChange, onClearError }: ItemEditorPr
   const lastEmittedRef = useRef<string | null>(null);
 
   const editor = useEditor({
-    extensions: [StarterKit, VariableChip],
+    extensions: [
+      StarterKit,
+      TaskList,
+      TaskItem.configure({
+        nested: true,
+      }),
+      VariableChip,
+    ],
     content: markdownToHtml(value),
     editable: true,
     immediatelyRender: false,

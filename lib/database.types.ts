@@ -1,9 +1,6 @@
-export type ItemCategory =
-  | "template"
-  | "plan"
-  | "data_output"
-  | "agente"
-  | "skill";
+export type ItemCategory = "template" | "agente" | "skill";
+
+export type TemplateSubcategory = "Planes" | "Test" | "Debug" | "n8n";
 
 export interface AppliedSkill {
   id: string;
@@ -15,6 +12,7 @@ export interface Item {
   title: string;
   content: string;
   category: ItemCategory;
+  subcategory: string | null;
   tags: string[];
   applied_skills: AppliedSkill[];
   is_favorite: boolean;
@@ -25,16 +23,15 @@ export interface Item {
 
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   template: "Templates",
-  plan: "Planes",
-  data_output: "Salida de data",
-  agente: "Agentes",
+  agente: "Agents",
   skill: "Skills",
 };
 
-export const CATEGORIES: ItemCategory[] = [
-  "template",
-  "plan",
-  "data_output",
-  "agente",
-  "skill",
+export const CATEGORIES: ItemCategory[] = ["template", "agente", "skill"];
+
+export const TEMPLATE_SUBCATEGORIES: TemplateSubcategory[] = [
+  "Planes",
+  "Test",
+  "Debug",
+  "n8n",
 ];

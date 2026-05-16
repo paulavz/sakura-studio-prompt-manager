@@ -25,7 +25,7 @@ export default function NewItemPage() {
               type="text"
               required
               className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm text-black placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300"
-              placeholder="Mi nuevo prompt..."
+              placeholder="My new prompt..."
             />
           </div>
           <div>
