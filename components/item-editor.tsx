@@ -5,8 +5,10 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import { Fragment, Slice } from "@tiptap/pm/model";
 import { VariableChip } from "./tiptap-variable-chip";
 import { markdownToHtml, htmlToMarkdown } from "@/lib/markdown";
+import { plainTextToParagraphNodes } from "@/lib/paste";
 
 interface ItemEditorProps {
   mode: "rendered" | "raw";
@@ -33,11 +35,16 @@ export function ItemEditor({ mode, value, onChange, onClearError }: ItemEditorPr
     editorProps: {
       // Always paste as plain text — Tiptap's HTML paste introduces unwanted
       // formatting (VS Code colors, doc fonts) that doesn't survive the
-      // markdown round-trip cleanly.
+      // markdown round-trip cleanly. Build paragraph/hardBreak nodes from
+      // the plain text so newlines survive serialization (insertText keeps
+      // \n as literal characters that HTML collapses on save).
       handlePaste: (view, event) => {
         event.preventDefault();
         const text = event.clipboardData?.getData("text/plain") || "";
-        view.dispatch(view.state.tr.insertText(text));
+        if (!text) return true;
+        const nodes = plainTextToParagraphNodes(text, view.state.schema);
+        const slice = new Slice(Fragment.fromArray(nodes), 1, 1);
+        view.dispatch(view.state.tr.replaceSelection(slice));
         return true;
       },
     },
