@@ -9,11 +9,12 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-CLAUDE.md
-PLAN.md
 
 # testing
 /coverage
+/test-results
+/playwright-report
+/playwright/.cache
 
 # next.js
 /.next/
@@ -34,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -49,5 +51,20 @@ next-env.d.ts
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# planning / docs (kept local, not pushed)
+CLAUDE.md
+PLAN.md
+PLAN-*.md
+
+# design mockups (kept local)
+/design
+
+# phase audits / capture scripts (kept local)
+/phases
+/phase1_audit
+/phase8_screenshots
+phase1_capture.py
+phase8_screenshots.py
 
 skills-lock.json

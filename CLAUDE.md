@@ -82,8 +82,8 @@ Todas las tablas viven en el schema `public`. Las claves primarias son `uuid` co
 | `id` | `uuid` PK | `default gen_random_uuid()` |
 | `title` | `text` | `not null` |
 | `content` | `text` | markdown, `not null default ''` |
-| `category` | `text` | `check (category in ('template','agente','skill'))` — `plan` y `data_output` eliminadas el 2026-05-15 (Q3 de `PLAN-DESIGN-DELTA-V2.md`); items existentes migrados a `template`/`agente` durante la migración correspondiente. |
-| `subcategory` | `text` | nullable. Valores esperados para `category='template'`: `'Planes' | 'Test' | 'Debug' | 'n8n'`. Para otras categorías queda en `null`. Añadida 2026-05-15 (Q1). Sin check constraint (lista abierta para futuras incorporaciones). |
+| `category` | `text` | `check (category in ('template','plan','report','output','messaging','agente','skill'))` — 7 categorías top-level desde 2026-05-15 (PLAN-NEW-CATEGORIES.md). |
+| `applied_skills` | `jsonb` | array de `{id, name}`, `default '[]'::jsonb`. Capturado en snapshot de versions. |
 | `tags` | `jsonb` | array de slugs `snake_case`, `default '[]'::jsonb` |
 | `is_favorite` | `boolean` | `default false` |
 | `owner` | `uuid` | FK → `auth.users(id)` `on delete cascade`, `not null` |
@@ -136,15 +136,20 @@ Tabla separada para gestión limpia desde Settings.
 
 ## Categorías de contenido
 
-A partir del 2026-05-15 (Q3 de `PLAN-DESIGN-DELTA-V2.md`) las categorías vigentes son tres:
+A partir del 2026-05-15 (PLAN-NEW-CATEGORIES.md) las categorías vigentes son **siete**, agrupadas visualmente en la sidebar bajo el encabezado `Workspace` (5) más secciones propias para `Agents` y `Skills`:
 
-- **Templates** (`template`) — prompts estructurados. Subdividen vía `items.subcategory`: `Planes` (antes categoría `plan`), `Test`, `Debug`, `n8n`. Los planes prefabricados ahora viven aquí con `subcategory='Planes'`.
-- **Agentes** (`agente`) — configs de sistema (ej. `PR.md`).
+**Workspace:**
+- **Templates** (`template`) — prompts estructurados reutilizables.
+- **Plans** (`plan`) — planes de implementación, testing o migración.
+- **Reports** (`report`) — informes, análisis o resúmenes.
+- **Outputs** (`output`) — salidas de datos, scripts de generación de archivos.
+- **Messaging** (`messaging`) — prompts de comunicación, mensajes, copy.
+
+**Library:**
+- **Agents** (`agente`) — configs de sistema (ej. `PR.md`).
 - **Skills** (`skill`) — fragmentos de conocimiento independientes, inyectables en otros prompts.
 
-Categorías eliminadas (no usar en código nuevo):
-- ~~`plan`~~ → migrar a `template` + `subcategory='Planes'`.
-- ~~`data_output`~~ → eliminada sin reemplazo directo; los items existentes se migran caso a caso (típicamente `template`).
+No existe `subcategory`. Las antiguas subcategorías (`Planes`, `Test`, `Debug`, `n8n`) fueron migradas: `Planes` → categoría `plan`; `Test`/`Debug`/`n8n` → tags (snake_case).
 
 ## Sistemas centrales
 

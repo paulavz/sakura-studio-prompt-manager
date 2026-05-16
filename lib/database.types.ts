@@ -1,6 +1,11 @@
-export type ItemCategory = "template" | "agente" | "skill";
-
-export type TemplateSubcategory = "Planes" | "Test" | "Debug" | "n8n";
+export type ItemCategory =
+  | "template"
+  | "plan"
+  | "report"
+  | "output"
+  | "messaging"
+  | "agente"
+  | "skill";
 
 export interface AppliedSkill {
   id: string;
@@ -12,7 +17,6 @@ export interface Item {
   title: string;
   content: string;
   category: ItemCategory;
-  subcategory: string | null;
   tags: string[];
   applied_skills: AppliedSkill[];
   is_favorite: boolean;
@@ -21,17 +25,38 @@ export interface Item {
   updated_at: string;
 }
 
+// Labels displayed in UI dropdowns and headers.
 export const CATEGORY_LABELS: Record<ItemCategory, string> = {
   template: "Templates",
+  plan: "Plans",
+  report: "Reports",
+  output: "Outputs",
+  messaging: "Messaging",
   agente: "Agents",
   skill: "Skills",
 };
 
-export const CATEGORIES: ItemCategory[] = ["template", "agente", "skill"];
+// Order in which categories appear in the New Prompt dropdown and sidebar.
+// 7 entries: 5 Workspace + Agents + Skills.
+export const CATEGORIES: ItemCategory[] = [
+  "template", "plan", "report", "output", "messaging",
+  "agente", "skill",
+];
 
-export const TEMPLATE_SUBCATEGORIES: TemplateSubcategory[] = [
-  "Planes",
-  "Test",
-  "Debug",
-  "n8n",
+// Icons taken from design v4 sidebar (unicode glyphs).
+export const CATEGORY_ICONS: Record<ItemCategory, string> = {
+  template: "▦",
+  plan: "◐",
+  report: "▤",
+  output: "⬚",
+  messaging: "✉",
+  agente: "◇",
+  skill: "✦",
+};
+
+// Visual grouping for the sidebar.
+// Workspace = the 5 promoted categories.
+// Agents / Skills get their own section, matching the v4 design.
+export const WORKSPACE_CATEGORIES: ItemCategory[] = [
+  "template", "plan", "report", "output", "messaging",
 ];

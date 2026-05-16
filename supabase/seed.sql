@@ -1,4 +1,4 @@
--- Sakura Prompt Studio — Seeds de prueba (Fase 2, schema 2026-05-15)
+-- Sakura Prompt Studio — Seeds de prueba (schema 2026-05-15 v2)
 --
 -- INSTRUCCIONES:
 -- 1. Tu UUID de usuario v1 es: 7f13129c-5676-4e92-843a-76ee817dfcf3
@@ -45,16 +45,15 @@ values
   ('migration',    'Migration',    '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid);
 
 -- ═══════════════════════════════════════════════════════════════════════════════
--- 3. ITEMS
+-- 3. ITEMS (7 categorías: template, plan, report, output, messaging, agente, skill)
 -- ═══════════════════════════════════════════════════════════════════════════════
 
-insert into public.items (title, content, category, subcategory, tags, is_favorite, owner)
+insert into public.items (title, content, category, tags, is_favorite, owner)
 values
   (
     'Plan de testing E2E',
     'Crea un plan de testing end-to-end para {{nombre_proyecto}} usando Playwright.',
-    'template',
-    'Planes',
+    'plan',
     '["testing", "playwright"]'::jsonb,
     true,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -63,7 +62,6 @@ values
     'Template PR Review',
     'Revisa este PR siguiendo las guidelines del proyecto.',
     'template',
-    null,
     '["code_review", "git"]'::jsonb,
     false,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -72,7 +70,6 @@ values
     'Generar HTML semantico',
     'Dado el siguiente diseno, genera el HTML semantico correspondiente.',
     'template',
-    null,
     '["frontend", "html"]'::jsonb,
     false,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -81,7 +78,6 @@ values
     'Agente — Senior Frontend',
     'Actua como el agente Senior Frontend Engineer para este desarrollo.\n\nTu tarea es refactorizar el componente dado aplicando patrones de composicion.',
     'agente',
-    null,
     '["rol", "frontend"]'::jsonb,
     true,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -90,7 +86,6 @@ values
     'Skill — Validacion de forms',
     '\n\nUsa la skill Validacion de Formularios para este desarrollo.',
     'skill',
-    null,
     '["forms", "ux"]'::jsonb,
     false,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -99,7 +94,6 @@ values
     'Automatizacion n8n',
     'Construye un workflow en n8n que reciba un webhook de {{servicio_origen}} y envie los datos formateados a {{servicio_destino}}.',
     'template',
-    'n8n',
     '["automation", "n8n"]'::jsonb,
     false,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -107,8 +101,7 @@ values
   (
     'Salida Excel desde Python',
     'Genera un script de Python que lea {{archivo_entrada}} y produzca un archivo Excel con las columnas: ID, Nombre, Estado.',
-    'template',
-    null,
+    'output',
     '["python", "excel"]'::jsonb,
     false,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
@@ -116,8 +109,7 @@ values
   (
     'Plan de migracion de BD',
     'Define un plan paso a paso para migrar la base de datos de {{motor_actual}} a {{motor_nuevo}} sin downtime.',
-    'template',
-    'Planes',
+    'plan',
     '["database", "migration"]'::jsonb,
     true,
     '7f13129c-5676-4e92-843a-76ee817dfcf3'::uuid
