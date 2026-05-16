@@ -2,8 +2,44 @@
 
 @theme {
   --color-sakura: #FFB7C5;
+  --color-sakura-soft: rgba(255, 183, 197, 0.15);
+  --color-sakura-glow: rgba(255, 183, 197, 0.4);
   --color-background: #FFFFFF;
   --color-foreground: #000000;
+  --color-error: #DC2626;
+
+  --color-gray-50: #FAFAFA;
+  --color-gray-100: #F5F5F5;
+  --color-gray-200: #E8E8E8;
+  --color-gray-300: #D0D0D0;
+  --color-gray-400: #A0A0A0;
+  --color-gray-600: #666666;
+  --color-gray-800: #222222;
+
+  --color-gray-line: #E8E8E8;
+  --color-gray-surface: #F5F5F5;
+  --color-tag-blue: #E8F4FF;
+  --color-tag-green: #F0F8E8;
+  --color-tag-orange: #FFF3E8;
+  --color-tag-pink: #FFF0F5;
+
+  --color-agent-pill-bg: #F0F8E8;
+  --color-agent-border: #C8DCB4;
+  --color-agent-ink: #4E7A3A;
+  --color-agent-pill-border: var(--color-agent-border);
+  --color-agent-pill-text: var(--color-agent-ink);
+  --color-variable-text: #C45E78;
+
+  --color-tag-chip-text: #666666;
+  --color-tag-chip-bg: #F5F5F5;
+  --color-tag-chip-border: #E8E8E8;
+
+  --color-sakura-6: rgba(255, 183, 197, 0.06);
+  --color-sakura-10: rgba(255, 183, 197, 0.10);
+  --color-sakura-18: rgba(255, 183, 197, 0.18);
+  --color-sakura-20: rgba(255, 183, 197, 0.2);
+  --color-sakura-40: rgba(255, 183, 197, 0.40);
+  --color-sakura-50: rgba(255, 183, 197, 0.5);
 
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
@@ -13,9 +49,225 @@
 
   --border-width: 1px;
   --border-color: #E5E5E5;
+
+  --sidebar-width: 224px;
+  --gallery-width: 320px;
+  --width-vars: 360px;
+  --width-history: 360px;
+  --radius: 8px;
+  --radius-sm: 5px;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+}
+
+/* Raw textarea — styled to match <pre> mockup */
+.raw-pre {
+  width: 100%;
+  min-height: 400px;
+  padding: 20px 22px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--color-gray-800);
+  background-color: var(--color-gray-50);
+  border: 1px solid var(--color-gray-200);
+  border-radius: 8px;
+  resize: vertical;
+  outline: none;
+}
+.raw-pre:focus {
+  box-shadow: 0 0 0 1px var(--color-gray-300);
+}
+
+/* Variable chip styles used by markdown renderer and Tiptap */
+.variable-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 0.25rem;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  background-color: var(--color-sakura-20);
+  border: 1px solid var(--color-sakura-50);
+  color: var(--color-variable-text);
+  font-family: var(--font-mono);
+}
+
+/* Tiptap / ProseMirror editor styles */
+.ProseMirror {
+  outline: none;
+  min-height: 400px;
+  cursor: text;
+  caret-color: var(--color-foreground);
+}
+
+.ProseMirror h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 0.875rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.35;
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.ProseMirror p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror ul li::marker {
+  color: var(--color-sakura);
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.ProseMirror ol li::marker {
+  color: var(--color-sakura);
+  font-family: var(--font-mono);
+}
+
+.ProseMirror li {
+  margin-bottom: 0.25rem;
+}
+
+.ProseMirror strong {
+  font-weight: 700;
+}
+
+.ProseMirror em {
+  font-style: italic;
+}
+
+.ProseMirror code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+.ProseMirror pre {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.75rem;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid var(--color-sakura);
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+  color: #4b5563;
+}
+
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  appearance: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  border: 1px solid var(--color-gray-300);
+  border-radius: 0.2rem;
+  background-color: white;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked {
+  background-color: var(--color-sakura);
+  border-color: var(--color-sakura);
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em white;
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.ProseMirror a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.ProseMirror hr {
+  border: none;
+  border-top: 1px solid #e5e5e5;
+  margin: 1rem 0;
 }

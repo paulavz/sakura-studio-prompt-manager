@@ -1,0 +1,401 @@
+// Sakura Prompt Studio — Sample Data
+const PROMPTS_DATA = [
+  {
+    id: 1,
+    title: "Sprint Planning Pro",
+    category: "Templates",
+    subcategory: "Planes",
+    tags: ["#planning", "#agile", "#sprint"],
+    favorite: true,
+    hasVariables: true,
+    content: `# Sprint Planning: {{proyecto}}
+
+## Contexto del Sprint
+Eres un Scrum Master experto ayudando al equipo de **{{proyecto}}** a planificar el sprint {{numero_sprint}}.
+
+## Objetivos del Sprint
+Define claramente los objetivos para el sprint número {{numero_sprint}}:
+
+1. **Goal principal**: Identifica el sprint goal que aporte más valor
+2. **Capacidad del equipo**: Calcula la capacidad en story points
+3. **Backlog refinement**: Selecciona las user stories más prioritarias
+
+## User Stories a considerar
+- Nivel de complejidad: {{complejidad}}
+- Equipo disponible: {{equipo}} personas
+- Duración del sprint: 2 semanas
+
+## Output esperado
+Genera:
+- Sprint Goal statement
+- Lista priorizada de user stories con estimaciones
+- Posibles impedimentos y plan de mitigación
+- Definition of Done actualizada
+
+> Usa un enfoque pragmático y orientado a resultados medibles.`,
+    variables: ["proyecto", "numero_sprint", "complejidad", "equipo"],
+    createdAt: "2026-04-15"
+  },
+  {
+    id: 2,
+    title: "Debug Sistemático",
+    category: "Templates",
+    subcategory: "Debug",
+    tags: ["#debug", "#python", "#systematic"],
+    favorite: false,
+    hasVariables: true,
+    content: `# Debug Sistemático: {{lenguaje}}
+
+## El Problema
+\`\`\`
+{{error_message}}
+\`\`\`
+
+## Contexto del Código
+- Lenguaje: {{lenguaje}}
+- Framework: {{framework}}
+- Versión: {{version}}
+
+## Proceso de Diagnóstico
+
+### 1. Análisis del Error
+Examina el stack trace y determina:
+- ¿En qué línea ocurre el error?
+- ¿Qué tipo de error es?
+- ¿Cuándo fue introducido?
+
+### 2. Hipótesis
+Lista las 3 causas más probables en orden de probabilidad:
+
+1. **Hipótesis A**: ...
+2. **Hipótesis B**: ...
+3. **Hipótesis C**: ...
+
+### 3. Plan de Verificación
+Para cada hipótesis, define:
+- Test a ejecutar
+- Resultado esperado si es correcto
+- Siguiente paso si no es correcto
+
+### 4. Solución
+Una vez identificada la causa:
+- Implementa el fix mínimo necesario
+- Añade test de regresión
+- Documenta el cambio
+
+> Sé metódico. Un bug bien diagnosticado se resuelve en minutos.`,
+    variables: ["lenguaje", "error_message", "framework", "version"],
+    createdAt: "2026-04-18"
+  },
+  {
+    id: 3,
+    title: "PR Review Assistant",
+    category: "Agentes",
+    subcategory: "PR.md",
+    tags: ["#code-review", "#github", "#quality"],
+    favorite: true,
+    hasVariables: true,
+    content: `# PR Review Agent
+
+## Rol
+Eres un Senior Engineer haciendo code review del PR: **{{pr_title}}**
+
+## Criterios de Revisión
+
+### Corrección
+- [ ] ¿El código hace lo que dice el PR?
+- [ ] ¿Hay edge cases no contemplados?
+- [ ] ¿Los tests cubren los cambios?
+
+### Calidad
+- [ ] ¿Sigue los patrones del proyecto?
+- [ ] ¿Hay código duplicado?
+- [ ] ¿Los nombres son descriptivos?
+
+### Seguridad
+- [ ] ¿Hay inputs sin validar?
+- [ ] ¿Se exponen datos sensibles?
+- [ ] ¿Las dependencias nuevas son confiables?
+
+### Performance
+- [ ] ¿Hay queries N+1?
+- [ ] ¿Los assets están optimizados?
+- [ ] ¿Hay operaciones bloqueantes?
+
+## Contexto del PR
+- Repositorio: {{repo}}
+- Branch: {{branch}} → main
+- Autor: {{autor}}
+- Archivos cambiados: {{num_archivos}}
+
+## Output
+Genera feedback estructurado con:
+1. **Bloqueantes** (must fix)
+2. **Sugerencias** (nice to have)  
+3. **Elogios** (lo que está bien)
+4. **Decisión**: Approve / Request Changes / Comment`,
+    variables: ["pr_title", "repo", "branch", "autor", "num_archivos"],
+    createdAt: "2026-04-20"
+  },
+  {
+    id: 4,
+    title: "n8n Workflow Builder",
+    category: "Templates",
+    subcategory: "n8n",
+    tags: ["#n8n", "#automation", "#workflow"],
+    favorite: false,
+    hasVariables: true,
+    content: `# n8n Workflow: {{workflow_name}}
+
+## Objetivo de Automatización
+Diseña un workflow en n8n para: **{{objetivo}}**
+
+## Nodos Requeridos
+
+### Trigger
+- Tipo: {{trigger_type}}
+- Configuración específica para {{contexto}}
+
+### Procesamiento
+\`\`\`json
+{
+  "workflow": "{{workflow_name}}",
+  "steps": [
+    "1. Recibir datos de {{fuente}}",
+    "2. Transformar/filtrar según lógica de negocio",
+    "3. Enrutar a destino correcto"
+  ]
+}
+\`\`\`
+
+## Consideraciones
+- Manejo de errores: implementar retry logic
+- Logging: registrar cada ejecución
+- Notificaciones: alertar en caso de fallo
+
+## Output Esperado
+Describe cada nodo con:
+- Tipo de nodo n8n
+- Parámetros de configuración
+- Lógica de transformación de datos
+- Conexiones entre nodos`,
+    variables: ["workflow_name", "objetivo", "trigger_type", "contexto", "fuente"],
+    createdAt: "2026-04-22"
+  },
+  {
+    id: 5,
+    title: "Test Coverage Analysis",
+    category: "Templates",
+    subcategory: "Test",
+    tags: ["#testing", "#coverage", "#quality"],
+    favorite: false,
+    hasVariables: false,
+    content: `# Test Coverage Analysis
+
+## Objetivo
+Analiza la cobertura de tests del proyecto y genera un plan de mejora.
+
+## Metodología
+
+### 1. Inventario Actual
+Categoriza los tests existentes:
+- **Unit tests**: funciones/métodos individuales
+- **Integration tests**: interacción entre módulos  
+- **E2E tests**: flujos completos de usuario
+- **Snapshot tests**: componentes UI
+
+### 2. Identificación de Gaps
+Busca:
+- Código sin tests
+- Tests que no cubren edge cases
+- Lógica de negocio crítica sin cobertura
+- Flujos de error no testeados
+
+### 3. Priorización
+Ordena por:
+1. Impacto en el negocio (alto → bajo)
+2. Probabilidad de fallo (alto → bajo)
+3. Costo de implementación (bajo → alto)
+
+### 4. Plan de Acción
+Para cada área prioritaria:
+- Define qué testear
+- Elige el tipo de test adecuado
+- Estima el effort en horas
+- Asigna responsable
+
+## Métricas Objetivo
+- Line coverage: > 80%
+- Branch coverage: > 70%
+- Critical paths: 100%
+
+> La calidad del software no se inspecciona, se construye.`,
+    variables: [],
+    createdAt: "2026-04-25"
+  },
+  {
+    id: 6,
+    title: "Arquitectura de Microservicios",
+    category: "Skills",
+    subcategory: null,
+    tags: ["#architecture", "#microservices", "#design"],
+    favorite: true,
+    hasVariables: true,
+    content: `# Arquitectura: {{sistema}}
+
+## Contexto
+Diseña la arquitectura de microservicios para **{{sistema}}** con los siguientes requisitos:
+- Usuarios concurrentes: {{usuarios}}
+- SLA objetivo: {{sla}}%
+- Presupuesto cloud: {{presupuesto}}/mes
+
+## Servicios Identificados
+
+### Core Services
+Define los servicios esenciales:
+
+\`\`\`
+[API Gateway] → [Auth Service]
+                → [{{servicio_1}}]
+                → [{{servicio_2}}]
+                → [Notification Service]
+\`\`\`
+
+## Decisiones de Diseño
+
+### Comunicación
+- **Síncrona** (REST/gRPC): para operaciones que requieren respuesta inmediata
+- **Asíncrona** (eventos): para operaciones que pueden procesarse en background
+
+### Datos
+- Cada servicio tiene su propia base de datos (Database per Service)
+- Patrón Saga para transacciones distribuidas
+- Event sourcing para auditoría
+
+### Resiliencia
+- Circuit breaker en todas las llamadas inter-servicios
+- Retry con exponential backoff
+- Bulkhead pattern para aislar fallos
+
+## Infrastructure
+- Orquestación: Kubernetes
+- Service mesh: Istio
+- Observabilidad: OpenTelemetry + Grafana`,
+    variables: ["sistema", "usuarios", "sla", "presupuesto", "servicio_1", "servicio_2"],
+    createdAt: "2026-04-28"
+  },
+  {
+    id: 7,
+    title: "Readme Generator",
+    category: "Favoritos",
+    subcategory: null,
+    tags: ["#docs", "#markdown", "#github"],
+    favorite: true,
+    hasVariables: true,
+    content: `# README: {{proyecto}}
+
+Genera un README profesional para el proyecto **{{proyecto}}**.
+
+## Información del Proyecto
+- **Nombre**: {{proyecto}}
+- **Descripción**: {{descripcion}}
+- **Tech stack**: {{stack}}
+- **Tipo**: {{tipo}}
+
+## Secciones a incluir
+
+### Header
+- Badge de versión
+- Badge de licencia  
+- Badge de CI/CD status
+- Descripción breve impactante
+
+### Getting Started
+\`\`\`bash
+# Instalación
+npm install {{proyecto}}
+
+# Configuración
+cp .env.example .env
+
+# Desarrollo
+npm run dev
+\`\`\`
+
+### Features
+Lista las 5-7 features más importantes con:
+- Emoji representativo
+- Descripción en una línea
+- Beneficio para el usuario
+
+### Contributing
+- Fork → Branch → PR workflow
+- Código de conducta
+- Cómo reportar bugs
+
+### License
+{{licencia}}
+
+> Un buen README es la puerta de entrada a tu proyecto.`,
+    variables: ["proyecto", "descripcion", "stack", "tipo", "licencia"],
+    createdAt: "2026-04-30"
+  },
+  {
+    id: 8,
+    title: "Code Refactor Guide",
+    category: "Skills",
+    subcategory: null,
+    tags: ["#refactor", "#clean-code", "#patterns"],
+    favorite: false,
+    hasVariables: false,
+    content: `# Code Refactoring Guide
+
+## Principios Fundamentales
+
+### 1. Boy Scout Rule
+Deja el código mejor de como lo encontraste. En cada cambio:
+- Mejora los nombres si no son claros
+- Extrae funciones si el método es muy largo
+- Elimina comentarios obsoletos
+
+### 2. SOLID Principles
+- **S**ingle Responsibility: cada clase/función hace una sola cosa
+- **O**pen/Closed: abierto para extensión, cerrado para modificación
+- **L**iskov Substitution: subclases intercambiables con la base
+- **I**nterface Segregation: interfaces específicas > generales
+- **D**ependency Inversion: depende de abstracciones
+
+### 3. Code Smells a Eliminar
+- **Long Method**: > 20 líneas → extrae funciones
+- **Large Class**: > 300 líneas → divide responsabilidades
+- **Duplicate Code**: DRY principle
+- **Magic Numbers**: extrae a constantes nombradas
+- **Deep Nesting**: > 3 niveles → refactoriza con early return
+
+## Proceso de Refactor Seguro
+
+1. **Tests primero**: asegúrate de tener cobertura antes de cambiar
+2. **Un cambio a la vez**: commits pequeños y atómicos
+3. **Ejecuta tests frecuentemente**: después de cada cambio
+4. **Review continuo**: no acumules deuda técnica
+
+## Patrones Útiles
+- Extract Method / Extract Class
+- Replace Magic Number with Symbolic Constant
+- Introduce Parameter Object
+- Replace Conditional with Polymorphism`,
+    variables: [],
+    createdAt: "2026-05-01"
+  }
+];
+
+const SKILLS_DATA = [
+  { id: 1, name: "Chain of Thought", description: "Razonamiento paso a paso" },
+  { id: 2, name: "Few-Shot Learning", description: "Ejemplos contextuales" },
+  { id: 3, name: "Tree of Thoughts", description: "Exploración de múltiples caminos" },
+  { id: 4, name: "ReAct", description: "Razonamiento y acción iterativa" },
+  { id: 5, name: "Self-Consistency", description: "Múltiples caminos, mejor respuesta" },
+  { id: 6, name: "Structured Output", description: "Formato JSON/XML estricto" },
+  { id: 7, name: "Role Playing", description: "Adoptar un rol específico" },
+  { id: 8, name: "Socratic Method", description: "Preguntas guiadas para reflexión" }
+];

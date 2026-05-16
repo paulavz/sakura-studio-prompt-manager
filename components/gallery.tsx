@@ -1,137 +1,166 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Item, ItemCategory, CATEGORY_LABELS, CATEGORIES } from "@/lib/database.types";
 import { ItemCard } from "./item-card";
+import { ItemView } from "./item-view";
+import { Sidebar } from "./sidebar";
+import { NewItemModal } from "./new-item-modal";
 
 interface GalleryProps {
   items: Item[];
+  minVarLength?: number;
+  maxVarLength?: number;
 }
 
-export function Gallery({ items }: GalleryProps) {
-  const [selectedCategory, setSelectedCategory] = useState<ItemCategory | "all">("all");
+export function Gallery({ items, minVarLength = 1, maxVarLength = 4000 }: GalleryProps) {
+  const router = useRouter();
+  const [selectedCategory, setSelectedCategory] = useState<ItemCategory | "all" | "favorites">("all");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [onlyFavorites, setOnlyFavorites] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [newModalOpen, setNewModalOpen] = useState(false);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      if (selectedCategory !== "all" && item.category !== selectedCategory) {
+      if (selectedCategory === "favorites" && !item.is_favorite) {
+        return false;
+      }
+      if (selectedCategory !== "all" && selectedCategory !== "favorites" && item.category !== selectedCategory) {
+        return false;
+      }
+      if (selectedSubcategory && item.subcategory !== selectedSubcategory) {
         return false;
       }
       if (normalizedQuery && !item.title.toLowerCase().includes(normalizedQuery)) {
         return false;
       }
-      if (onlyFavorites && !item.is_favorite) {
-        return false;
-      }
       return true;
     });
-  }, [items, selectedCategory, normalizedQuery, onlyFavorites]);
+  }, [items, selectedCategory, selectedSubcategory, normalizedQuery]);
 
-  const categoryCounts = useMemo(() => {
-    const counts: Record<ItemCategory | "all", number> = {
-      all: items.length,
-      template: 0,
-      plan: 0,
-      data_output: 0,
-      agente: 0,
-      skill: 0,
-    };
-    for (const item of items) {
-      counts[item.category]++;
+  const selectedItem = useMemo(() => {
+    if (selectedItemId) {
+      const found = items.find((i) => i.id === selectedItemId);
+      if (found) return found;
     }
-    return counts;
-  }, [items]);
+    return filteredItems.length > 0 ? filteredItems[0] : null;
+  }, [selectedItemId, items, filteredItems]);
+
+  const filterLabel = useMemo(() => {
+    if (selectedCategory === "all") return "All Prompts";
+    if (selectedCategory === "favorites") return "Favorites";
+    if (selectedSubcategory) return selectedSubcategory;
+    return CATEGORY_LABELS[selectedCategory as ItemCategory];
+  }, [selectedCategory, selectedSubcategory]);
+
+  const handleSelectCategory = (cat: ItemCategory | "all" | "favorites", subcategory?: string | null) => {
+    setSelectedCategory(cat);
+    setSelectedSubcategory(subcategory ?? null);
+    setSelectedItemId(null);
+  };
 
   return (
-    <div className="flex min-h-screen flex-col gap-8 p-8 lg:flex-row">
+    <div data-region="layout-root" className="flex h-screen overflow-hidden bg-white">
       {/* Sidebar */}
-      <aside className="shrink-0 lg:w-48">
-        <nav aria-label="Filtros de categoría">
-          <ul className="space-y-1">
-            <li>
-              <button
-                onClick={() => setSelectedCategory("all")}
-                className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                  selectedCategory === "all"
-                    ? "bg-gray-100 text-black"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                }`}
-              >
-                <span>Todos</span>
-                <span className="text-xs text-gray-400">{categoryCounts.all}</span>
-              </button>
-            </li>
-            {CATEGORIES.map((cat) => (
-              <li key={cat}>
-                <button
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                    selectedCategory === cat
-                      ? "bg-gray-100 text-black"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-black"
-                  }`}
-                >
-                  <span>{CATEGORY_LABELS[cat]}</span>
-                  <span className="text-xs text-gray-400">{categoryCounts[cat]}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
+      <Sidebar
+        items={items}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedCategory={selectedCategory}
+        selectedSubcategory={selectedSubcategory}
+        onSelectCategory={handleSelectCategory}
+      />
 
-      {/* Main content */}
-      <main className="flex-1">
-        {/* Toolbar */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative max-w-sm flex-1">
-            <label htmlFor="search" className="sr-only">
-              Buscar por título
-            </label>
-            <input
-              id="search"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por título…"
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm text-black placeholder-gray-400 outline-none transition-colors focus:border-gray-400"
-            />
+      {/* Gallery */}
+      <main data-region="gallery" className="w-[var(--gallery-width)] shrink-0 border-r border-gray-200 grid grid-rows-[auto_1fr] bg-white overflow-hidden">
+        {/* Header */}
+        <div className="px-[16px] pt-[14px] pb-[12px] border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <div className="text-[14px] font-semibold tracking-[-0.01em] text-black">{filterLabel}</div>
+            <div className="flex items-center gap-[8px] mt-[3px]">
+              <span className="text-[11px] text-gray-400">
+                {filteredItems.length} prompt{filteredItems.length !== 1 ? 's' : ''}
+              </span>
+              <span className="inline-flex items-center gap-[3px] text-[10px] text-variable-text bg-sakura-soft border border-sakura/30 rounded-[4px] px-[6px] py-[2px] leading-none">
+                <span className="leading-none">🌸</span>
+                <span>with variables</span>
+              </span>
+            </div>
           </div>
-
-          <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={onlyFavorites}
-              onChange={(e) => setOnlyFavorites(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-black accent-black"
-            />
-            Solo favoritos
-          </label>
+          <button
+            onClick={() => setNewModalOpen(true)}
+            className="w-[28px] h-[28px] rounded-[var(--radius-sm)] border border-gray-200 flex items-center justify-center text-[13px] text-gray-400 hover:bg-gray-50 hover:text-black transition-all"
+            title="New prompt"
+          >
+            +
+          </button>
         </div>
 
-        {/* Grid */}
-        {items.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No hay items todavía. Inserta semillas desde el SQL Editor de Supabase
-            (ver <code className="rounded bg-gray-100 px-1 py-0.5 font-mono text-xs">supabase/seed.sql</code>).
-          </p>
-        ) : filteredItems.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No se encontraron items para los filtros seleccionados.
-          </p>
-        ) : (
-          <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {filteredItems.map((item) => (
-              <li key={item.id}>
-                <ItemCard item={item} />
-              </li>
-            ))}
-          </ul>
-        )}
+        {/* Card List */}
+        <div className="flex-1 overflow-y-auto px-[12px] py-[10px] flex flex-col gap-[6px]">
+          {items.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-[8px] text-gray-400">
+              <div className="text-[28px] opacity-40">🌸</div>
+              <div className="text-[12px]">No items yet.</div>
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-[8px] text-gray-400">
+              <div className="text-[28px] opacity-40">🌸</div>
+              <div className="text-[12px]">No prompts found</div>
+            </div>
+          ) : (
+            filteredItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                onSelect={(item) => setSelectedItemId(item.id)}
+                isSelected={selectedItem?.id === item.id}
+              />
+            ))
+          )}
+        </div>
       </main>
+
+      {/* Viewer */}
+      <div data-region="viewer" className="flex-1 overflow-y-auto bg-white">
+        {selectedItem ? (
+          <ItemView
+            key={selectedItem.id}
+            item={selectedItem}
+            minVarLength={minVarLength}
+            maxVarLength={maxVarLength}
+            embedded={true}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-gray-400 text-sm">
+            Select an item to view
+          </div>
+        )}
+      </div>
+
+      <NewItemModal
+        isOpen={newModalOpen}
+        onClose={() => setNewModalOpen(false)}
+        onCreated={(id) => {
+          setNewModalOpen(false);
+          setSelectedItemId(id);
+          setSelectedCategory("all");
+          setSelectedSubcategory(null);
+          setSearchQuery("");
+          router.refresh();
+        }}
+      />
+
+      <style jsx global>{`
+        @keyframes zen-pulse {
+          0%, 100% { opacity: 0.5; box-shadow: 0 0 4px var(--color-sakura); }
+          50% { opacity: 1; box-shadow: 0 0 10px var(--color-sakura); }
+        }
+      `}</style>
     </div>
   );
 }

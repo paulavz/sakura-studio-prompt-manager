@@ -28,5 +28,11 @@ export default async function ItemPage({ params }: PageProps) {
     tags: Array.isArray(item.tags) ? (item.tags as string[]) : [],
   };
 
-  return <ItemView item={typedItem} />;
+  return (
+    <ItemView
+      item={typedItem}
+      minVarLength={Number(process.env.MIN_VAR_LENGTH ?? 1)}
+      maxVarLength={Number(process.env.MAX_VAR_LENGTH ?? 4000)}
+    />
+  );
 }

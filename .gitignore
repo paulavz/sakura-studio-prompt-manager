@@ -9,6 +9,8 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+CLAUDE.md
+PLAN.md
 
 # testing
 /coverage
@@ -37,7 +39,15 @@ yarn-error.log*
 .vercel
 /.agents
 /.claude
+/.pi
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+skills-lock.json
